@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoVault — Restricted Administrator Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --surface: #111827;
+      --surface-alt: #1F2937;
+      --border: #263042;
+      --text: #F9FAFB;
+      --muted: #9CA3AF;
+      --brand: #10B981;
+      --brand-dark: #059669;
+      --brand-bg: rgba(16, 185, 129, 0.14);
+      --danger: #EF4444;
+      --danger-bg: rgba(239, 68, 68, 0.14);
+      --amber: #F59E0B;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --font: 'Inter', -apple-system, sans-serif;
+      --display: 'Plus Jakarta Sans', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
+    .num { font-variant-numeric: tabular-nums; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 18px; }
+    .btn { border: 0; border-radius: 8px; padding: 9px 14px; font: 600 13px var(--font); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: .15s; }
+    .btn-brand { background: var(--brand); color: #052E16; font-weight: 700; }
+    .btn-brand:hover { background: var(--brand-dark); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-ghost { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--brand); }
+    .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 7px; }
+    .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-block; }
+    .b-green { background: var(--brand-bg); color: var(--brand); }
+    .b-red { background: var(--danger-bg); color: var(--danger); }
+    .b-amber { background: var(--amber-bg); color: var(--amber); }
+
+    /* ADMIN LOGIN SCREEN */
+    .auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at top, #132A24 0%, #0B0F19 55%); }
+    .auth-card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 30px; box-shadow: 0 20px 45px rgba(0,0,0,.45); }
+    .field { display: grid; gap: 6px; margin-bottom: 14px; }
+    .field label { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .field input, .field select, .field textarea { width: 100%; background: var(--surface-alt); border: 1px solid var(--border); color: var(--text); border-radius: 9px; padding: 10px 12px; font: 13px var(--font); outline: none; }
+    .field input:focus, .field textarea:focus { border-color: var(--brand); }
+    .err { color: var(--danger); font-size: 12px; min-height: 16px; margin-bottom: 8px; }
+
+    /* ADMIN CONSOLE SHELL */
+    .shell { display: none; min-height: 100vh; }
+    .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; top: 0; bottom: 0; left: 0; padding: 20px 12px; display: flex; flex-direction: column; }
+    .side-btn { width: 100%; border: 0; background: transparent; color: var(--muted); padding: 10px 12px; border-radius: 9px; font: 600 13px var(--font); display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; margin-bottom: 4px; }
+    .side-btn:hover, .side-btn.active { background: var(--brand-bg); color: var(--brand); }
+    .main { margin-left: 240px; }
+    .topbar { height: 64px; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 20; }
+    .content { max-width: 1360px; margin: 0 auto; padding: 24px; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th { text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #1F2937; border: 1px solid var(--brand); color: #fff; padding: 11px 16px; border-radius: 9px; font-size: 13px; opacity: 0; transition: .2s; pointer-events: none; z-index: 90; }
+    .toast.show { opacity: 1; }
+    @media (max-width: 960px) { .sidebar { position: static; width: 100%; flex-direction: row; overflow-x: auto; } .main { margin-left: 0; } .grid-4, .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <!-- SEPARATE ADMIN 2-STEP AUTHENTICATION -->
+  <div class="auth-wrap" id="adminAuthScreen">
+    <div class="auth-card">
+      <span class="badge b-green" style="margin-bottom:10px;">RESTRICTED ADMINISTRATOR PORTAL</span>
+      <h2 style="margin:0 0 6px;font:800 22px var(--display);">CryptoVault Admin</h2>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 20px;">Authorized personnel only. All logins and queries are audit-logged.</p>
+
+      <!-- STEP 1: ADMIN CREDENTIALS -->
+      <form id="adminLoginForm">
+        <div class="field"><label>Administrator Email ID</label><input type="email" id="admEmail" required /></div>
+        <div class="field"><label>Administrator Password</label><input type="password" id="admPassword" required /></div>
+        <div class="err" id="admLoginErr"></div>
+        <button type="submit" class="btn btn-brand" style="width:100%;" id="admStep1Btn">Verify Credentials & Send OTP</button>
+      </form>
+
+      <!-- STEP 2: RESEND EMAIL OTP -->
+      <form id="adminOtpForm" style="display:none;">
+        <p style="font-size:13px;color:var(--muted);">Enter the 6-digit security OTP sent via Resend to <strong id="admOtpEmailDisplay" style="color:var(--text);"></strong>.</p>
+        <div class="field"><label>6-Digit Admin OTP</label><input type="text" id="admOtpCode" maxlength="6" pattern="\d{6}" style="letter-spacing:8px;font-size:20px;font-weight:700;text-align:center;" required /></div>
+        <div class="err" id="admOtpErr"></div>
+        <button type="submit" class="btn btn-brand" style="width:100%;">Verify OTP & Enter Console</button>
+        <div style="display:flex;justify-content:space-between;margin-top:12px;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="resetAdminAuthUI()">← Back</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="resendAdminOtp()">Resend OTP</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DEDICATED ADMIN CONTROL CENTER -->
+  <div class="shell" id="adminShell">
+    <aside class="sidebar">
+      <div style="padding:4px 10px 20px;">
+        <div style="font:800 18px var(--display);color:var(--brand);">◈ CryptoVault</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Admin Control Center</div>
+      </div>
+      <button class="side-btn active" data-view="overview" onclick="switchAdminView('overview')">📊 Platform Overview</button>
+      <button class="side-btn" data-view="users" onclick="switchAdminView('users')">👥 Customers & Support Access</button>
+      <button class="side-btn" data-view="tickets" onclick="switchAdminView('tickets')">🎧 Support Tickets</button>
+      <button class="side-btn" data-view="sql" onclick="switchAdminView('sql')">🗄️ DB Schema & SQL Console</button>
+      <button class="side-btn" data-view="backups" onclick="switchAdminView('backups')">💾 Backup & Restore</button>
+      <button class="side-btn" data-view="audit" onclick="switchAdminView('audit')">🛡️ Security & Audit Logs</button>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <strong id="admViewTitle" style="font:700 16px var(--display);">Platform Overview</strong>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:12px;color:var(--muted);" id="admLoggedInName">Admin</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadAllAdminData()">↻ Refresh</button>
+          <button class="btn btn-danger btn-sm" onclick="adminLogout()">Logout</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <!-- 1. OVERVIEW -->
+        <section class="view active" id="view-overview">
+          <div class="grid-4">
+            <div class="card" style="margin:0;"><div style="color:var(--muted);font-size:12px;">Registered Customers</div><div class="num" style="font:700 24px var(--display);margin-top:6px;" id="stUsers">0</div></div>
+            <div class="card" style="margin:0;"><div style="color:var(--muted);font-size:12px;">Active Accounts</div><div class="num" style="font:700 24px var(--display);margin-top:6px;" id="stActive">0</div></div>
+            <div class="card" style="margin:0;"><div style="color:var(--muted);font-size:12px;">Total Platform Transactions</div><div class="num" style="font:700 24px var(--display);margin-top:6px;" id="stTxs">0</div></div>
+            <div class="card" style="margin:0;"><div style="color:var(--muted);font-size:12px;">Total Assets Under Tracking</div><div class="num" style="font:700 24px var(--display);margin-top:6px;" id="stAum">$0.00</div></div>
+          </div>
+
+          <div class="card" style="overflow-x:auto;">
+            <strong>Recent Platform Security & Activity Events</strong>
+            <table style="margin-top:10px;">
+              <thead><tr><th>Timestamp</th><th>Actor ID</th><th>Event</th><th>Description</th><th>IP Address</th></tr></thead>
+              <tbody id="ovLogsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 2. CUSTOMERS & RESTRICTED SUPPORT INSPECTION -->
+        <section class="view" id="view-users">
+          <div class="card" style="overflow-x:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <strong>Registered User Accounts</strong>
+              <span style="font-size:12px;color:var(--muted);">Passwords & OTP secrets are cryptographically hashed and never exposed.</span>
+            </div>
+            <table>
+              <thead><tr><th>User ID</th><th>Full Name</th><th>Email Address</th><th>Mobile</th><th>Role</th><th>Status</th><th>Last Login</th><th>Account & Support Actions</th></tr></thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="card" id="supportInspectBox" style="display:none;border-color:var(--brand);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <strong id="inspectTitle" style="color:var(--brand);">Audited Customer Portfolio View</strong>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('supportInspectBox').style.display='none'">Close</button>
+            </div>
+            <div class="grid-2">
+              <div style="overflow-x:auto;">
+                <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Customer Holdings</div>
+                <table><thead><tr><th>Symbol</th><th>Quantity</th><th>Total Invested (USD)</th></tr></thead><tbody id="inspectHoldingsBody"></tbody></table>
+              </div>
+              <div style="overflow-x:auto;">
+                <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Recent Customer Transactions</div>
+                <table><thead><tr><th>ID</th><th>Type</th><th>Symbol</th><th>Qty</th><th>Price (USD)</th><th>Date</th></tr></thead><tbody id="inspectTxBody"></tbody></table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. SUPPORT TICKETS -->
+        <section class="view" id="view-tickets">
+          <div class="card">
+            <strong>Customer Support Tickets & Ratings</strong>
+            <div id="adminTicketsList" style="margin-top:14px;"></div>
+          </div>
+        </section>
+
+        <!-- 4. DB SCHEMA & GUARDED SQL CONSOLE -->
+        <section class="view" id="view-sql">
+          <div class="card">
+            <strong>Administrator SQL Console (Audited & Transaction-Guarded)</strong>
+            <p style="font-size:12px;color:var(--muted);margin:4px 0 10px;">Supports SELECT and confirmed INSERT/UPDATE/DELETE. Credential tables (`otp_verifications`, `user_sessions`, `users`) are protected.</p>
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+              <button class="btn btn-ghost btn-sm" onclick="setSql('SELECT * FROM v_platform_overview;')">Platform Overview View</button>
+              <button class="btn btn-ghost btn-sm" onclick="setSql('SELECT * FROM v_user_portfolio_summary LIMIT 25;')">All Portfolio Summary View</button>
+              <button class="btn btn-ghost btn-sm" onclick="setSql('SELECT symbol, name, current_price, change_24h, price_source FROM cryptocurrencies;')">Market Prices</button>
+            </div>
+            <div class="field"><textarea id="admSqlInput" rows="3" placeholder="SELECT * FROM v_platform_overview;"></textarea></div>
+            <div style="display:flex;gap:12px;align-items:center;">
+              <button class="btn btn-brand btn-sm" onclick="runAdminSql()">Execute SQL</button>
+              <label style="font-size:12px;color:var(--muted);"><input type="checkbox" id="admSqlConfirm" /> Confirm write operation (INSERT / UPDATE / DELETE)</label>
+            </div>
+            <div id="admSqlFeedback" style="margin-top:10px;font-size:12px;"></div>
+            <div style="overflow-x:auto;margin-top:12px;"><table id="admSqlResultTable"></table></div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card" style="overflow-x:auto;">
+              <strong>Database Tables, Views & Stored Procedures</strong>
+              <table style="margin-top:8px;"><thead><tr><th>Name</th><th>Type</th><th>Engine</th></tr></thead><tbody id="admSchemaTables"></tbody></table>
+            </div>
+            <div class="card" style="overflow-x:auto;">
+              <strong>Foreign Key Relationships</strong>
+              <table style="margin-top:8px;"><thead><tr><th>Column</th><th>References</th><th>Constraint</th></tr></thead><tbody id="admSchemaFks"></tbody></table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. BACKUP & RESTORE -->
+        <section class="view" id="view-backups">
+          <div class="card" style="overflow-x:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div>
+                <strong>Local MySQL Backup & Safe Restoration</strong>
+                <div style="font-size:12px;color:var(--muted);">Restoring automatically creates a `PRE_RESTORE` backup snapshot first so existing data is never overwritten blindly.</div>
+              </div>
+              <button class="btn btn-brand btn-sm" onclick="triggerManualBackup()">+ Create Manual Backup</button>
+            </div>
+            <table>
+              <thead><tr><th>Backup File</th><th>Type</th><th>Size</th><th>Created At</th><th>Action</th></tr></thead>
+              <tbody id="admBackupsTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 6. AUDIT LOGS -->
+        <section class="view" id="view-audit">
+          <div class="card" style="overflow-x:auto;">
+            <strong>Tamper-Resistant Security & Activity Audit Trail</strong>
+            <table style="margin-top:10px;">
+              <thead><tr><th>Log ID</th><th>Timestamp</th><th>Actor ID</th><th>Target ID</th><th>Event Type</th><th>Description</th><th>IP</th></tr></thead>
+              <tbody id="fullAuditBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let csrfToken = '';
+    let pendingAdminEmail = '';
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const toast = msg => { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3200); };
+
+    async function api(url, opts = {}) {
+      opts.headers = Object.assign({ 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }, opts.headers || {});
+      const res = await fetch(url, opts);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    }
+
+    function resetAdminAuthUI() {
+      document.getElementById('adminLoginForm').style.display = 'block';
+      document.getElementById('adminOtpForm').style.display = 'none';
+      document.getElementById('admLoginErr').textContent = '';
+      document.getElementById('admOtpErr').textContent = '';
+    }
+
+    document.getElementById('adminLoginForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      document.getElementById('admLoginErr').textContent = '';
+      const btn = document.getElementById('admStep1Btn');
+      btn.disabled = true;
+      try {
+        const email = document.getElementById('admEmail').value.trim();
+        const res = await api('/api/admin/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password: document.getElementById('admPassword').value })
+        });
+        pendingAdminEmail = email;
+        document.getElementById('admOtpEmailDisplay').textContent = email;
+        document.getElementById('adminLoginForm').style.display = 'none';
+        document.getElementById('adminOtpForm').style.display = 'block';
+        toast(res.message);
+      } catch (err) {
+        document.getElementById('admLoginErr').textContent = err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('adminOtpForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      document.getElementById('admOtpErr').textContent = '';
+      try {
+        const res = await api('/api/admin/auth/verify-otp', {
+          method: 'POST',
+          body: JSON.stringify({ email: pendingAdminEmail, otp: document.getElementById('admOtpCode').value })
+        });
+        csrfToken = res.csrf_token;
+        resetAdminAuthUI();
+        toast(res.message);
+        await checkAdminSession();
+      } catch (err) {
+        document.getElementById('admOtpErr').textContent = err.message;
+      }
+    });
+
+    async function resendAdminOtp() {
+      try {
+        const res = await api('/api/admin/auth/resend-otp', { method: 'POST', body: JSON.stringify({ email: pendingAdminEmail }) });
+        toast(res.message);
+      } catch (err) {
+        document.getElementById('admOtpErr').textContent = err.message;
+      }
+    }
+
+    async function adminLogout() {
+      await api('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      document.getElementById('adminShell').style.display = 'none';
+      document.getElementById('adminAuthScreen').style.display = 'grid';
+    }
+
+    async function checkAdminSession() {
+      const status = await api('/api/auth/status');
+      csrfToken = status.csrf_token;
+      if (status.authenticated && status.user.role === 'ADMIN') {
+        document.getElementById('adminAuthScreen').style.display = 'none';
+        document.getElementById('adminShell').style.display = 'block';
+        document.getElementById('admLoggedInName').textContent = `${status.user.full_name} (${status.user.email})`;
+        await loadAllAdminData();
+      } else {
+        document.getElementById('adminAuthScreen').style.display = 'grid';
+        document.getElementById('adminShell').style.display = 'none';
+      }
+    }
+
+    function switchAdminView(view) {
+      document.querySelectorAll('.side-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + view).classList.add('active');
+      document.getElementById('admViewTitle').textContent = view.toUpperCase();
+    }
+
+    async function loadAllAdminData() {
+      const [ov, sup, sch] = await Promise.all([
+        api('/api/admin/overview'),
+        api('/api/support'),
+        api('/api/db/schema')
+      ]);
+
+      document.getElementById('stUsers').textContent = ov.stats.total_users;
+      document.getElementById('stActive').textContent = ov.stats.active_users;
+      document.getElementById('stTxs').textContent = ov.stats.total_transactions;
+      document.getElementById('stAum').textContent = '$' + Number(ov.stats.total_aum_usd).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+      document.getElementById('usersTableBody').innerHTML = ov.users.map(u => `
+        <tr>
+          <td class="num">#${u.user_id}</td>
+          <td><strong>${esc(u.full_name)}</strong> ${u.is_demo ? '<span class="badge b-amber">DEMO</span>' : ''}</td>
+          <td>${esc(u.email)}</td>
+          <td>${esc(u.mobile_number || '-')}</td>
+          <td><span class="badge ${u.role === 'ADMIN' ? 'b-amber' : 'b-green'}">${esc(u.role)}</span></td>
+          <td><span class="badge ${u.account_status === 'ACTIVE' ? 'b-green' : 'b-red'}">${esc(u.account_status)}</span></td>
+          <td>${esc(u.last_login_at || 'Never')}</td>
+          <td style="display:flex;gap:6px;">
+            ${u.role !== 'ADMIN' ? `
+              <button class="btn btn-ghost btn-sm" onclick="updateUserStatus(${u.user_id}, 'ACTIVE')">Activate</button>
+              <button class="btn btn-ghost btn-sm" onclick="updateUserStatus(${u.user_id}, 'DEACTIVATED')">Deactivate</button>
+              <button class="btn btn-danger btn-sm" onclick="updateUserStatus(${u.user_id}, 'SUSPENDED')">Suspend</button>
+              <button class="btn btn-brand btn-sm" onclick="inspectCustomer(${u.user_id})">Inspect Portfolio</button>
+            ` : '<span style="color:var(--muted);font-size:12px;">Protected Admin</span>'}
+          </td>
+        </tr>`).join('');
+
+      document.getElementById('admBackupsTable').innerHTML = ov.backups.map(b => `
+        <tr>
+          <td><strong>${esc(b.file_name)}</strong></td>
+          <td><span class="badge b-green">${esc(b.backup_type)}</span></td>
+          <td class="num">${Number(b.file_size_bytes).toLocaleString()} bytes</td>
+          <td>${esc(b.created_at)}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="restoreDbBackup('${esc(b.file_name)}')">Restore Snapshot</button></td>
+        </tr>`).join('') || '<tr><td colspan="5">No backups recorded yet.</td></tr>';
+
+      const renderLogs = rows => rows.map(l => `
+        <tr>
+          <td class="num">${esc(l.created_at)}</td>
+          <td class="num">${l.actor_user_id || '-'}</td>
+          <td class="num">${l.target_user_id || '-'}</td>
+          <td><span class="badge b-amber">${esc(l.event_type)}</span></td>
+          <td>${esc(l.description)}</td>
+          <td class="num">${esc(l.ip_address)}</td>
+        </tr>`).join('');
+
+      document.getElementById('ovLogsBody').innerHTML = ov.audit_logs.slice(0, 10).map(l => `
+        <tr><td>${esc(l.created_at)}</td><td>${l.actor_user_id || '-'}</td><td><strong>${esc(l.event_type)}</strong></td><td>${esc(l.description)}</td><td>${esc(l.ip_address)}</td></tr>
+      `).join('');
+      document.getElementById('fullAuditBody').innerHTML = renderLogs(ov.audit_logs);
+
+      document.getElementById('adminTicketsList').innerHTML = sup.tickets.map(t => `
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--surface-alt);">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div><strong>#${t.ticket_id} — ${esc(t.subject)}</strong> <span style="color:var(--muted);font-size:12px;">by ${esc(t.full_name)} (${esc(t.email)})</span></div>
+            <div><span class="badge b-green">${esc(t.status)}</span> ${t.rating ? `<span class="badge b-amber">Rating: ${t.rating}/5</span>` : ''}</div>
+          </div>
+          <div style="margin-top:8px;">
+            ${t.messages.map(m => `<div style="font-size:12px;padding:4px 0;"><strong>${esc(m.sender_name)} [${esc(m.sender_role)}]:</strong> ${esc(m.body)}</div>`).join('')}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <input type="text" id="admRep_${t.ticket_id}" placeholder="Write official support response..." style="flex:1;min-width:220px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 10px;" />
+            <select id="admStatus_${t.ticket_id}" style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px;">
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="RESOLVED" selected>RESOLVED</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+            <button class="btn btn-brand btn-sm" onclick="sendAdminTicketReply(${t.ticket_id})">Send Reply</button>
+          </div>
+        </div>`).join('') || '<div style="color:var(--muted);">No customer support tickets found.</div>';
+
+      document.getElementById('admSchemaTables').innerHTML =
+        sch.tables.map(t => `<tr><td><strong>${esc(t.TABLE_NAME)}</strong></td><td>${esc(t.TABLE_TYPE)}</td><td>${esc(t.ENGINE || 'VIEW')}</td></tr>`).join('') +
+        sch.routines.map(r => `<tr><td><strong>${esc(r.ROUTINE_NAME)}</strong></td><td>${esc(r.ROUTINE_TYPE)}</td><td>MySQL</td></tr>`).join('');
+      document.getElementById('admSchemaFks').innerHTML = sch.foreign_keys.map(f => `
+        <tr><td>${esc(f.TABLE_NAME)}.${esc(f.COLUMN_NAME)}</td><td>${esc(f.REFERENCED_TABLE_NAME)}.${esc(f.REFERENCED_COLUMN_NAME)}</td><td>${esc(f.CONSTRAINT_NAME)}</td></tr>
+      `).join('');
+    }
+
+    async function updateUserStatus(uid, status) {
+      try {
+        const res = await api(`/api/admin/users/${uid}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+        toast(res.message);
+        await loadAllAdminData();
+      } catch (err) { toast(err.message); }
+    }
+
+    async function inspectCustomer(uid) {
+      const reason = prompt('Mandatory Security Audit — Enter support ticket ID or justification (min 10 chars):');
+      if (!reason) return;
+      try {
+        const res = await api(`/api/admin/support-inspect/${uid}`, { method: 'POST', body: JSON.stringify({ reason }) });
+        document.getElementById('supportInspectBox').style.display = 'block';
+        document.getElementById('inspectTitle').textContent = `Audited Support Access: ${res.user.full_name} (${res.user.email})`;
+        document.getElementById('inspectHoldingsBody').innerHTML = res.holdings.map(h => `
+          <tr><td><strong>${esc(h.symbol)}</strong></td><td class="num">${h.quantity}</td><td class="num">$${Number(h.total_invested).toFixed(2)}</td></tr>
+        `).join('') || '<tr><td colspan="3">No active holdings.</td></tr>';
+        document.getElementById('inspectTxBody').innerHTML = res.transactions.map(t => `
+          <tr><td>#${t.tx_id}</td><td>${esc(t.tx_type)}</td><td><strong>${esc(t.symbol)}</strong></td><td class="num">${t.quantity}</td><td class="num">$${Number(t.price_usd).toFixed(2)}</td><td>${esc(t.tx_date)}</td></tr>
+        `).join('') || '<tr><td colspan="6">No transactions.</td></tr>';
+        await loadAllAdminData();
+      } catch (err) { toast(err.message); }
+    }
+
+    async function sendAdminTicketReply(tid) {
+      const body = document.getElementById('admRep_' + tid).value.trim();
+      const status = document.getElementById('admStatus_' + tid).value;
+      if (!body) return toast('Enter a reply message.');
+      try {
+        const res = await api(`/api/support/tickets/${tid}/reply`, { method: 'POST', body: JSON.stringify({ body, status }) });
+        toast(res.message);
+        await loadAllAdminData();
+      } catch (err) { toast(err.message); }
+    }
+
+    function setSql(q) { document.getElementById('admSqlInput').value = q; }
+
+    async function runAdminSql() {
+      const sql = document.getElementById('admSqlInput').value;
+      const confirmed = document.getElementById('admSqlConfirm').checked;
+      try {
+        const res = await api('/api/db/query', { method: 'POST', body: JSON.stringify({ sql, confirmed }) });
+        document.getElementById('admSqlFeedback').innerHTML = `<span style="color:var(--brand);">${esc(res.message)}</span>`;
+        const tbl = document.getElementById('admSqlResultTable');
+        if (!res.rows.length) { tbl.innerHTML = ''; return; }
+        const cols = Object.keys(res.rows[0]);
+        tbl.innerHTML = `<thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${res.rows.map(r => `<tr>${cols.map(c => `<td>${esc(r[c])}</td>`).join('')}</tr>`).join('')}</tbody>`;
+      } catch (err) {
+        document.getElementById('admSqlFeedback').innerHTML = `<span style="color:var(--danger);">${esc(err.message)}</span>`;
+      }
+    }
+
+    async function triggerManualBackup() {
+      try {
+        const res = await api('/api/admin/backups/create', { method: 'POST' });
+        toast(res.message);
+        await loadAllAdminData();
+      } catch (err) { toast(err.message); }
+    }
+
+    async function restoreDbBackup(fileName) {
+      if (!confirm(`Restore database from ${fileName}? A safety backup of the current state will be created automatically first.`)) return;
+      try {
+        const res = await api('/api/admin/backups/restore', { method: 'POST', body: JSON.stringify({ file_name: fileName, confirmed: true }) });
+        toast(res.message);
+        await loadAllAdminData();
+      } catch (err) { toast(err.message); }
+    }
+
+    checkAdminSession();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoVault — Cryptocurrency Portfolio & DBMS Platform</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#00B386" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F4F6F9;
+      --surface: #FFFFFF;
+      --surface-alt: #F9FAFB;
+      --border: #E5E7EB;
+      --text: #111827;
+      --muted: #6B7280;
+      --brand: #00B386;
+      --brand-dark: #009973;
+      --brand-bg: #E6F8F3;
+      --sell: #EB5B3C;
+      --sell-bg: #FEF2F0;
+      --shadow: 0 4px 16px rgba(17, 24, 39, 0.05);
+      --font: 'Inter', -apple-system, sans-serif;
+      --display: 'Plus Jakarta Sans', sans-serif;
+    }
+    [data-theme="dark"] {
+      --bg: #0B0F19;
+      --surface: #111827;
+      --surface-alt: #1F2937;
+      --border: #263042;
+      --text: #F9FAFB;
+      --muted: #9CA3AF;
+      --brand: #10B981;
+      --brand-dark: #059669;
+      --brand-bg: rgba(16, 185, 129, 0.14);
+      --sell: #F87171;
+      --sell-bg: rgba(248, 113, 113, 0.14);
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; transition: background .2s, color .2s; }
+    .num { font-variant-numeric: tabular-nums; }
+    .pos { color: var(--brand); font-weight: 600; }
+    .neg { color: var(--sell); font-weight: 600; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); }
+    .btn { border: 0; border-radius: 9px; padding: 10px 16px; font: 600 13px var(--font); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: .15s; }
+    .btn-brand { background: var(--brand); color: #fff; }
+    .btn-brand:hover { background: var(--brand-dark); }
+    .btn-sell { background: var(--sell); color: #fff; }
+    .btn-ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--brand); }
+    .btn-sm { padding: 6px 11px; font-size: 12px; border-radius: 7px; }
+    .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-block; }
+    .badge-green { background: var(--brand-bg); color: var(--brand); }
+    .badge-red { background: var(--sell-bg); color: var(--sell); }
+    .badge-amber { background: #FEF3C7; color: #B45309; }
+    .field { display: grid; gap: 6px; margin-bottom: 13px; }
+    .field label { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 9px; padding: 9px 12px; font: 13px var(--font); outline: none; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th { text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .err { color: var(--sell); font-size: 12px; min-height: 16px; margin-bottom: 8px; }
+    .offline-bar { display: none; background: #B45309; color: #fff; text-align: center; padding: 6px; font-size: 12px; font-weight: 600; }
+
+    /* PUBLIC LANDING PAGE */
+    .landing-nav { max-width: 1240px; margin: 0 auto; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .logo { display: flex; align-items: center; gap: 10px; font: 800 20px var(--display); }
+    .logo-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--brand); color: #fff; display: grid; place-items: center; }
+    .hero { max-width: 1240px; margin: 20px auto 40px; padding: 0 20px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items: center; }
+    .hero h1 { font: 800 38px/1.15 var(--display); margin: 12px 0 16px; }
+
+    /* AUTH OVERLAY */
+    .modal-bg { position: fixed; inset: 0; background: rgba(15, 23, 42, .55); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+    .modal-bg.open { display: flex; }
+    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 460px; padding: 26px; max-height: 92vh; overflow-y: auto; }
+
+    /* AUTHENTICATED SHELL */
+    .app-shell { display: none; min-height: 100vh; }
+    .sidebar { width: 245px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; top: 0; bottom: 0; left: 0; padding: 18px 12px; display: flex; flex-direction: column; z-index: 30; transition: width .2s; overflow-y: auto; }
+    .sidebar.collapsed { width: 72px; }
+    .sidebar.collapsed .nav-label, .sidebar.collapsed .brand-text { display: none; }
+    .side-item { width: 100%; border: 0; background: transparent; color: var(--muted); padding: 10px 12px; border-radius: 9px; font: 600 13px var(--font); display: flex; align-items: center; gap: 11px; cursor: pointer; text-align: left; margin-bottom: 4px; }
+    .side-item:hover, .side-item.active { background: var(--brand-bg); color: var(--brand); }
+    .main-wrap { margin-left: 245px; transition: margin-left .2s; }
+    .main-wrap.expanded { margin-left: 72px; }
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); height: 64px; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 20; gap: 10px; }
+    .content { max-width: 1320px; margin: 0 auto; padding: 22px 22px 84px; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* MOBILE BOTTOM NAV */
+    .bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); z-index: 40; justify-content: space-around; padding: 8px 4px; }
+    .bottom-nav button { border: 0; background: transparent; color: var(--muted); font: 600 11px var(--font); display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+    .bottom-nav button.active { color: var(--brand); }
+
+    /* ASSISTANT CHAT */
+    .chat-box { height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface-alt); display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .chat-msg { max-width: 82%; padding: 10px 14px; border-radius: 12px; font-size: 13px; white-space: pre-line; }
+    .chat-user { align-self: flex-end; background: var(--brand); color: #fff; }
+    .chat-bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); }
+
+    .toast { position: fixed; bottom: 72px; right: 20px; background: #111827; color: #fff; padding: 11px 16px; border-radius: 9px; font-size: 13px; opacity: 0; transition: .2s; pointer-events: none; z-index: 80; }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 960px) {
+      .hero, .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main-wrap, .main-wrap.expanded { margin-left: 0; }
+      .bottom-nav { display: flex; }
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-bar" id="offlineBanner">Offline Mode: Showing cached static interface. Live market prices and MySQL updates are unavailable offline.</div>
+
+  <!-- PUBLIC LANDING PAGE -->
+  <div id="landingPage">
+    <header class="landing-nav">
+      <div class="logo"><span class="logo-icon">◈</span>CryptoVault</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="pubCurrency" class="btn btn-ghost btn-sm" onchange="renderPublicMarket()">
+          <option value="INR">₹ INR</option>
+          <option value="USD">$ USD</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="toggleTheme()">Theme</button>
+        <button class="btn btn-ghost" onclick="openAuthModal('login')" data-i18n="login">Sign In</button>
+        <button class="btn btn-brand" onclick="openAuthModal('register')" data-i18n="register">Create Account</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <span class="badge badge-green">CoinSwitch-Inspired Fintech & MySQL DBMS</span>
+        <h1>Track, Analyze & Master Your Crypto Portfolio in Real Time</h1>
+        <p style="color:var(--muted);font-size:15px;line-height:1.6;margin-bottom:22px;">
+          Multi-user cryptocurrency portfolio management powered by local MySQL, Resend 2-Step Email OTP security, dual INR/USD analytics, educational VDA tax estimation, and an interactive SQL Explorer.
+        </p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-brand" onclick="openAuthModal('register')">Get Started Free</button>
+          <button class="btn btn-ghost" onclick="startDemoMode()">Explore College Demo Mode</button>
+        </div>
+        <div class="grid-3" style="margin-top:26px;">
+          <div class="card" style="padding:14px;"><strong>Real Email OTP</strong><div style="color:var(--muted);font-size:12px;margin-top:4px;">Argon2id hashing & Resend 6-digit verification.</div></div>
+          <div class="card" style="padding:14px;"><strong>INR & USD Live</strong><div style="color:var(--muted);font-size:12px;margin-top:4px;">CoinGecko & CoinCap fallback with staleness tracking.</div></div>
+          <div class="card" style="padding:14px;"><strong>Full DBMS Engine</strong><div style="color:var(--muted);font-size:12px;margin-top:4px;">Triggers, Stored Procedures, Views & SQL Console.</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="overflow-x:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <strong>Live Cryptocurrency Market Overview</strong>
+          <span class="badge badge-green" id="pubMarketBadge">Loading...</span>
+        </div>
+        <table>
+          <thead><tr><th>Asset</th><th>Price</th><th>24h Change</th><th>Market Cap</th></tr></thead>
+          <tbody id="pubMarketBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- AUTHENTICATION MODAL (LOGIN / REGISTER / OTP / FORGOT / RESET) -->
+  <div class="modal-bg" id="authModal">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="logo" style="font-size:18px;"><span class="logo-icon" style="width:26px;height:26px;font-size:13px;">◈</span><span id="authTitle">Sign In</span></div>
+        <button class="btn btn-ghost btn-sm" onclick="closeAuthModal()">×</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="loginForm" style="display:none;">
+        <div class="field"><label>Email Address</label><input type="email" id="loginEmail" required /></div>
+        <div class="field"><label>Password</label><input type="password" id="loginPassword" required /></div>
+        <div class="field" id="captchaBox" style="display:none;">
+          <label id="captchaLabel">Security CAPTCHA</label>
+          <input type="text" id="loginCaptcha" placeholder="Enter answer" />
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:12px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="loginRemember" /> Remember Me (30 days)</label>
+          <a href="#" onclick="switchAuthView('forgot');return false;" style="color:var(--brand);font-weight:600;text-decoration:none;">Forgot Password?</a>
+        </div>
+        <div class="err" id="loginErr"></div>
+        <button type="submit" class="btn btn-brand" style="width:100%;">Sign In</button>
+        <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--muted);">
+          New to CryptoVault? <a href="#" onclick="switchAuthView('register');return false;" style="color:var(--brand);font-weight:600;">Create Account</a>
+        </div>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="registerForm" style="display:none;">
+        <div class="field"><label>Full Name</label><input type="text" id="regName" required /></div>
+        <div class="field"><label>Email Address</label><input type="email" id="regEmail" required /></div>
+        <div class="field"><label>Mobile Number</label><input type="tel" id="regMobile" placeholder="+91 9876543210" required /></div>
+        <div class="field"><label>Password (min 8 characters)</label><input type="password" id="regPassword" minlength="8" required /></div>
+        <div class="field"><label>Confirm Password</label><input type="password" id="regConfirm" minlength="8" required /></div>
+        <div class="err" id="regErr"></div>
+        <button type="submit" class="btn btn-brand" style="width:100%;">Send Email Verification OTP</button>
+        <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--muted);">
+          Already have an account? <a href="#" onclick="switchAuthView('login');return false;" style="color:var(--brand);font-weight:600;">Sign In</a>
+        </div>
+      </form>
+
+      <!-- OTP VERIFY FORM -->
+      <form id="otpVerifyForm" style="display:none;">
+        <p style="font-size:13px;color:var(--muted);">Enter the 6-digit OTP sent via Resend to <strong id="otpEmailDisplay"></strong> (expires in 5 minutes).</p>
+        <div class="field"><label>6-Digit Verification OTP</label><input type="text" id="otpCodeInput" maxlength="6" pattern="\d{6}" style="letter-spacing:8px;font-size:20px;font-weight:700;text-align:center;" required /></div>
+        <div class="err" id="otpErr"></div>
+        <button type="submit" class="btn btn-brand" style="width:100%;">Verify & Activate Account</button>
+        <div style="display:flex;justify-content:space-between;margin-top:12px;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="switchAuthView('register')">← Back</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="resendOtpBtn" onclick="resendOtpCode()">Resend OTP</button>
+        </div>
+      </form>
+
+      <!-- FORGOT PASSWORD FORM -->
+      <form id="forgotForm" style="display:none;">
+        <p style="font-size:13px;color:var(--muted);">Enter your registered email address to receive a password reset OTP.</p>
+        <div class="field"><label>Registered Email</label><input type="email" id="forgotEmail" required /></div>
+        <div class="err" id="forgotErr"></div>
+        <button type="submit" class="btn btn-brand" style="width:100%;">Send Password Reset OTP</button>
+      </form>
+
+      <!-- RESET PASSWORD FORM -->
+      <form id="resetForm" style="display:none;">
+        <p style="font-size:13px;color:var(--muted);">Enter the OTP sent to <strong id="resetEmailDisplay"></strong> and choose a new password.</p>
+        <div class="field"><label>6-Digit OTP</label><input type="text" id="resetOtp" maxlength="6" required /></div>
+        <div class="field"><label>New Password (min 8 chars)</label><input type="password" id="resetNewPwd" minlength="8" required /></div>
+        <div class="field"><label>Confirm New Password</label><input type="password" id="resetConfirmPwd" minlength="8" required /></div>
+        <div class="err" id="resetErr"></div>
+        <button type="submit" class="btn btn-brand" style="width:100%;">Reset Password</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- AUTHENTICATED MULTI-USER DASHBOARD SHELL -->
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" id="sidebar">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px 18px;">
+        <div class="logo"><span class="logo-icon">◈</span><span class="brand-text">CryptoVault</span></div>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sidebar').classList.toggle('collapsed');document.getElementById('mainWrap').classList.toggle('expanded');">☰</button>
+      </div>
+      <button class="side-item active" data-tab="dashboard" onclick="switchTab('dashboard')"><span>📊</span><span class="nav-label" data-i18n="nav_dashboard">Dashboard</span></button>
+      <button class="side-item" data-tab="portfolio" onclick="switchTab('portfolio')"><span>💼</span><span class="nav-label" data-i18n="nav_portfolio">Portfolio & Txns</span></button>
+      <button class="side-item" data-tab="markets" onclick="switchTab('markets')"><span>📈</span><span class="nav-label" data-i18n="nav_markets">Markets & Compare</span></button>
+      <button class="side-item" data-tab="analytics" onclick="switchTab('analytics')"><span>🧮</span><span class="nav-label" data-i18n="nav_analytics">Analytics & Tax</span></button>
+      <button class="side-item" data-tab="alerts" onclick="switchTab('alerts')"><span>🔔</span><span class="nav-label" data-i18n="nav_alerts">Watchlist & Alerts</span></button>
+      <button class="side-item" data-tab="assistant" onclick="switchTab('assistant')"><span>🤖</span><span class="nav-label" data-i18n="nav_assistant">Portfolio Assistant</span></button>
+      <button class="side-item" data-tab="dbms" onclick="switchTab('dbms')"><span>🗄️</span><span class="nav-label" data-i18n="nav_dbms">DBMS & SQL Console</span></button>
+      <button class="side-item" data-tab="support" onclick="switchTab('support')"><span>🎧</span><span class="nav-label" data-i18n="nav_support">Support & Demo</span></button>
+      <button class="side-item" data-tab="profile" onclick="switchTab('profile')"><span>👤</span><span class="nav-label" data-i18n="nav_profile">Profile & Security</span></button>
+      <button class="side-item" id="adminSideBtn" style="display:none;" data-tab="admin" onclick="switchTab('admin')"><span>🛡️</span><span class="nav-label">Admin Console</span></button>
+    </aside>
+
+    <div class="main-wrap" id="mainWrap">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <strong id="pageTitle" style="font:700 17px var(--display);">Dashboard</strong>
+          <span class="badge badge-amber" id="demoModeBadge" style="display:none;">ISOLATED DEMO MODE</span>
+          <span class="badge badge-green" id="marketFreshBadge">Synced</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <select id="currencySelect" class="btn btn-ghost btn-sm" onchange="changeCurrency(this.value)">
+            <option value="INR">₹ INR</option>
+            <option value="USD">$ USD</option>
+          </select>
+          <select id="langSelect" class="btn btn-ghost btn-sm" onchange="changeLanguage(this.value)">
+            <option value="en">EN</option>
+            <option value="hi">हिंदी</option>
+            <option value="te">తెలుగు</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="toggleTheme()">🌓</button>
+          <button class="btn btn-ghost btn-sm" onclick="switchTab('alerts')">🔔 <span id="unreadNotifCount">0</span></button>
+          <button class="btn btn-brand btn-sm" onclick="openTxModal()">+ Add Transaction</button>
+          <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <!-- 1. MAIN DASHBOARD -->
+        <section class="view active" id="view-dashboard">
+          <div class="grid-4" style="margin-bottom:18px;">
+            <div class="card"><div style="color:var(--muted);font-size:12px;" data-i18n="kpi_value">Total Portfolio Value</div><div class="num" style="font:700 22px var(--display);margin-top:6px;" id="kpiTotalVal">₹0.00</div></div>
+            <div class="card"><div style="color:var(--muted);font-size:12px;" data-i18n="kpi_invested">Total Investment</div><div class="num" style="font:700 22px var(--display);margin-top:6px;" id="kpiTotalInv">₹0.00</div></div>
+            <div class="card"><div style="color:var(--muted);font-size:12px;" data-i18n="kpi_unrealized">Unrealized Profit / Loss</div><div class="num" style="font:700 22px var(--display);margin-top:6px;" id="kpiUnrealized">₹0.00</div></div>
+            <div class="card"><div style="color:var(--muted);font-size:12px;" data-i18n="kpi_realized">Realized Profit / Loss</div><div class="num" style="font:700 22px var(--display);margin-top:6px;" id="kpiRealized">₹0.00</div></div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:18px;">
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <strong>Portfolio Valuation Trend</strong>
+                <button class="btn btn-ghost btn-sm" onclick="loadDashboard(true)">↻ Refresh Prices</button>
+              </div>
+              <div style="height:220px;"><canvas id="perfChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <strong>Asset Allocation</strong>
+                <span id="topWorstSummary" style="font-size:12px;color:var(--muted);"></span>
+              </div>
+              <div style="height:220px;"><canvas id="allocChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card" style="overflow-x:auto;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong>Recent Transactions</strong>
+                <button class="btn btn-ghost btn-sm" onclick="switchTab('portfolio')">View All</button>
+              </div>
+              <table>
+                <thead><tr><th>Date</th><th>Type</th><th>Coin</th><th>Qty</th><th>Price</th></tr></thead>
+                <tbody id="dashRecentTxBody"></tbody>
+              </table>
+            </div>
+            <div class="card" style="overflow-x:auto;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong>Watchlist Overview</strong>
+                <button class="btn btn-ghost btn-sm" onclick="switchTab('alerts')">Manage</button>
+              </div>
+              <table>
+                <thead><tr><th>Coin</th><th>Price</th><th>24h</th></tr></thead>
+                <tbody id="dashWatchBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. PORTFOLIO, HOLDINGS, 6-TYPE TRANSACTIONS & CSV IMPORT -->
+        <section class="view" id="view-portfolio">
+          <div class="card" style="margin-bottom:18px;overflow-x:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <strong>Your Cryptocurrency Holdings</strong>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a class="btn btn-ghost btn-sm" href="/api/reports/portfolio/csv">Export Portfolio CSV</a>
+                <a class="btn btn-ghost btn-sm" href="/api/reports/portfolio/pdf">Export Portfolio PDF</a>
+              </div>
+            </div>
+            <table>
+              <thead><tr><th>Coin</th><th>Quantity</th><th>Avg Buy</th><th>Invested</th><th>Live Price</th><th>Current Value</th><th>Unrealized P&L</th><th>Actions</th></tr></thead>
+              <tbody id="holdingsBody"></tbody>
+            </table>
+          </div>
+
+          <div class="card" style="margin-bottom:18px;">
+            <strong>Bulk Import Transactions via CSV</strong>
+            <p style="font-size:12px;color:var(--muted);margin:4px 0 10px;">Required CSV headers: <code>symbol,tx_type,quantity,price_usd</code> (optional: <code>fee_usd,tx_date,notes</code>). Duplicate rows are automatically detected.</p>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <input type="file" id="csvFileInput" accept=".csv" />
+              <button class="btn btn-brand btn-sm" onclick="uploadCsv()">Import CSV</button>
+              <a class="btn btn-ghost btn-sm" href="/api/reports/transactions/csv">Download Transactions CSV</a>
+              <a class="btn btn-ghost btn-sm" href="/api/reports/transactions/pdf">Download Transactions PDF</a>
+            </div>
+            <div id="csvImportReport" style="margin-top:10px;font-size:12px;"></div>
+          </div>
+
+          <div class="card" style="overflow-x:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <strong>Complete Transaction Ledger (Buy, Sell, Deposit, Withdrawal, Transfer, Staking)</strong>
+              <button class="btn btn-brand btn-sm" onclick="openTxModal()">+ New Transaction</button>
+            </div>
+            <table>
+              <thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Coin</th><th>Quantity</th><th>Price</th><th>Fee</th><th>Notes</th><th>Actions</th></tr></thead>
+              <tbody id="allTxBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 3. MARKET OVERVIEW & COMPARISON -->
+        <section class="view" id="view-markets">
+          <div class="grid-3" style="margin-bottom:18px;">
+            <div class="card"><div style="color:var(--muted);font-size:12px;">Tracked Global Market Cap</div><div class="num" style="font:700 20px var(--display);margin-top:6px;" id="mktGlobalCap">-</div></div>
+            <div class="card"><div style="color:var(--muted);font-size:12px;">Bitcoin Dominance</div><div class="num" style="font:700 20px var(--display);margin-top:6px;" id="mktBtcDom">-</div></div>
+            <div class="card"><div style="color:var(--muted);font-size:12px;">Top Gainer / Top Loser (24h)</div><div class="num" style="font:600 14px var(--font);margin-top:8px;" id="mktGainerLoser">-</div></div>
+          </div>
+
+          <div class="card" style="margin-bottom:18px;">
+            <strong>Multi-Cryptocurrency Side-by-Side Comparison</strong>
+            <div style="display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;">
+              <select id="cmpCoin1" onchange="renderComparison()"></select>
+              <select id="cmpCoin2" onchange="renderComparison()"></select>
+              <select id="cmpCoin3" onchange="renderComparison()"></select>
+            </div>
+            <div style="overflow-x:auto;">
+              <table>
+                <thead><tr><th>Metric</th><th id="cmpH1">Coin 1</th><th id="cmpH2">Coin 2</th><th id="cmpH3">Coin 3</th></tr></thead>
+                <tbody id="cmpBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:18px;">
+            <strong>Add Custom Cryptocurrency / Manual Price Override (API Fallback)</strong>
+            <div class="grid-4" style="margin-top:10px;">
+              <input type="text" id="custSym" placeholder="Symbol (e.g. MATIC)" />
+              <input type="text" id="custName" placeholder="Name (e.g. Polygon)" />
+              <input type="number" step="any" id="custPrice" placeholder="Price in USD" />
+              <button class="btn btn-brand" onclick="saveCustomCoin()">Save Coin / Price</button>
+            </div>
+          </div>
+
+          <div class="card" style="overflow-x:auto;">
+            <strong>All Supported Cryptocurrencies</strong>
+            <table>
+              <thead><tr><th>Coin</th><th>Price</th><th>24h Change</th><th>Market Cap</th><th>24h Volume</th><th>Source & Updated</th></tr></thead>
+              <tbody id="allCoinsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 4. ANALYTICS & EDUCATIONAL TAX ESTIMATOR -->
+        <section class="view" id="view-analytics">
+          <div class="card" style="margin-bottom:18px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+              <div>
+                <strong>Estimated Cryptocurrency Tax Calculator</strong>
+                <div class="badge badge-amber" style="margin-left:8px;">EDUCATIONAL ESTIMATE ONLY — NOT TAX ADVICE</div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <a class="btn btn-ghost btn-sm" href="/api/reports/tax/csv">Tax CSV</a>
+                <a class="btn btn-ghost btn-sm" href="/api/reports/tax/pdf">Tax PDF</a>
+              </div>
+            </div>
+            <div class="grid-4" style="margin-top:14px;">
+              <div><div style="color:var(--muted);font-size:12px;">Realized Gain/Loss</div><strong class="num" id="taxRealized">-</strong></div>
+              <div><div style="color:var(--muted);font-size:12px;">Est. 30% VDA Tax</div><strong class="num" id="tax30">-</strong></div>
+              <div><div style="color:var(--muted);font-size:12px;">Est. 1% TDS on Sales</div><strong class="num" id="tax1">-</strong></div>
+              <div><div style="color:var(--muted);font-size:12px;">Total Estimated Liability</div><strong class="num" id="taxTotal">-</strong></div>
+            </div>
+          </div>
+
+          <div class="card" style="overflow-x:auto;">
+            <strong>Monthly Investment & Sell Performance</strong>
+            <table>
+              <thead><tr><th>Month</th><th>Total Bought</th><th>Total Sold</th><th>Transactions</th></tr></thead>
+              <tbody id="monthlyBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 5. WATCHLIST, PRICE ALERTS & NOTIFICATIONS -->
+        <section class="view" id="view-alerts">
+          <div class="grid-2" style="margin-bottom:18px;">
+            <div class="card">
+              <strong>Add to Watchlist</strong>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <select id="watchAddSelect"></select>
+                <button class="btn btn-brand" onclick="addWatchlist()">Add</button>
+              </div>
+              <table style="margin-top:12px;">
+                <thead><tr><th>Coin</th><th>Live Price</th><th>24h</th><th>Action</th></tr></thead>
+                <tbody id="watchFullBody"></tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <strong>Set Email & In-App Price Alert (Resend Powered)</strong>
+              <div class="grid-3" style="margin-top:10px;">
+                <select id="alertCoinSelect"></select>
+                <select id="alertDirSelect"><option value="ABOVE">Rises Above (USD)</option><option value="BELOW">Drops Below (USD)</option></select>
+                <input type="number" step="any" id="alertTargetInput" placeholder="Target USD" />
+              </div>
+              <button class="btn btn-brand btn-sm" style="margin-top:10px;" onclick="createPriceAlert()">Create Price Alert</button>
+              <table style="margin-top:12px;">
+                <thead><tr><th>Coin</th><th>Condition</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="alertsBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <strong>Notification Centre</strong>
+              <button class="btn btn-ghost btn-sm" onclick="markAllNotifsRead()">Mark All Read</button>
+            </div>
+            <div id="notifList"></div>
+          </div>
+        </section>
+
+        <!-- 6. RULE-BASED PORTFOLIO ASSISTANT -->
+        <section class="view" id="view-assistant">
+          <div class="card">
+            <strong>Rule-Based Portfolio Assistant (Zero External Paid AI APIs)</strong>
+            <p style="font-size:12px;color:var(--muted);">Queries your authenticated MySQL portfolio records directly.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+              <button class="btn btn-ghost btn-sm" onclick="askAssistant('What is my total investment?')">What is my total investment?</button>
+              <button class="btn btn-ghost btn-sm" onclick="askAssistant('What is my current profit or loss?')">What is my profit or loss?</button>
+              <button class="btn btn-ghost btn-sm" onclick="askAssistant('Which cryptocurrency performs best?')">Best performer?</button>
+              <button class="btn btn-ghost btn-sm" onclick="askAssistant('What is my largest holding?')">Largest holding?</button>
+              <button class="btn btn-ghost btn-sm" onclick="askAssistant('What percentage of my portfolio is Bitcoin?')">% Bitcoin?</button>
+              <button class="btn btn-ghost btn-sm" onclick="askAssistant('Show my recent transactions')">Recent transactions?</button>
+            </div>
+            <div class="chat-box" id="chatBox">
+              <div class="chat-msg chat-bot">Hello! Ask me any question about your CryptoVault portfolio, profit/loss, asset allocation, or recent transactions.</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="chatInput" placeholder="Ask about your portfolio..." onkeydown="if(event.key==='Enter')askAssistant()" />
+              <button class="btn btn-brand" onclick="askAssistant()">Ask</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. DBMS EXPLORER & GUARDED SQL CONSOLE -->
+        <section class="view" id="view-dbms">
+          <div class="card" style="margin-bottom:18px;">
+            <strong>Entity-Relationship (ER) Architecture & Relational Schema</strong>
+            <pre style="background:var(--surface-alt);padding:12px;border-radius:8px;overflow-x:auto;font-size:12px;margin-top:10px;">[users (PK: user_id)] 1───* [portfolio_holdings (PK: holding_id, FK: user_id, symbol)] *───1 [cryptocurrencies (PK: symbol)]
+        │ 1                                                                                  │ 1
+        ├───* [transactions (PK: tx_id, FK: user_id, symbol)] ───────────────────────────────┘
+        ├───* [watchlist (PK: watchlist_id, FK: user_id, symbol)]
+        ├───* [price_alerts (PK: alert_id, FK: user_id, symbol)]
+        ├───* [notifications (PK: notification_id, FK: user_id)]
+        ├───* [user_sessions (PK: session_id, FK: user_id)]
+        └───* [support_tickets (PK: ticket_id, FK: user_id)] 1───* [ticket_messages (PK: message_id, FK: ticket_id)]</pre>
+          </div>
+
+          <div class="card" style="margin-bottom:18px;">
+            <strong>Interactive SQL Console (User-Scoped Read-Only / Admin Audited DML)</strong>
+            <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;">
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sqlInput').value='SELECT * FROM v_user_portfolio_summary;'">Query Portfolio View</button>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sqlInput').value='SELECT symbol, name, current_price, change_24h, price_source FROM cryptocurrencies ORDER BY current_price DESC;'">Query Cryptocurrencies</button>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sqlInput').value='SELECT tx_type, COUNT(*) AS orders, SUM(quantity) AS total_qty FROM transactions GROUP BY tx_type;'">Group Transactions</button>
+            </div>
+            <textarea id="sqlInput" rows="3" placeholder="SELECT * FROM v_user_portfolio_summary;"></textarea>
+            <div style="display:flex;gap:10px;align-items:center;margin-top:8px;">
+              <button class="btn btn-brand btn-sm" onclick="runSqlQuery(false)">Execute Query</button>
+              <label style="font-size:12px;"><input type="checkbox" id="sqlConfirmWrite" /> Confirm write operation (Admins only)</label>
+            </div>
+            <div id="sqlMsg" style="margin-top:8px;font-size:12px;"></div>
+            <div style="overflow-x:auto;margin-top:10px;"><table id="sqlResultTable"></table></div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card" style="overflow-x:auto;">
+              <strong>Tables, Views & Stored Procedures</strong>
+              <table><thead><tr><th>Name</th><th>Type</th><th>Engine</th></tr></thead><tbody id="schemaTablesBody"></tbody></table>
+            </div>
+            <div class="card" style="overflow-x:auto;">
+              <strong>Foreign Key Constraints & Indexes</strong>
+              <table><thead><tr><th>Table.Column</th><th>References</th><th>Constraint</th></tr></thead><tbody id="schemaFkBody"></tbody></table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. SUPPORT CENTRE & COLLEGE DEMO GUIDE -->
+        <section class="view" id="view-support">
+          <div class="card" style="margin-bottom:18px;">
+            <strong>College DBMS Demonstration Walkthrough</strong>
+            <ol style="line-height:1.8;color:var(--muted);font-size:13px;margin:8px 0 0;">
+              <li><strong>Multi-User Isolation:</strong> Every query filters by authenticated <code>session['user_id']</code>; Demo Mode uses an isolated <code>is_demo = 1</code> user without touching real records.</li>
+              <li><strong>ACID Transactions & Stored Procedures:</strong> Adding, editing, deleting, or CSV-importing transactions invokes <code>sp_recalculate_holding</code> inside an atomic transaction.</li>
+              <li><strong>Security & Resend 2FA:</strong> Argon2id password hashes, SHA-256 OTP hashes with 5-minute expiry, CSRF headers, rate limiting, CAPTCHA, and audit logging.</li>
+            </ol>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:18px;">
+            <div class="card">
+              <strong>Frequently Asked Questions (FAQs)</strong>
+              <div id="faqList" style="margin-top:10px;"></div>
+            </div>
+            <div class="card">
+              <strong>Create Support Ticket & Platform Feedback</strong>
+              <form onsubmit="submitSupportTicket(event)" style="margin-top:10px;">
+                <div class="field"><label>Subject</label><input type="text" id="supSubject" required /></div>
+                <div class="grid-2">
+                  <div class="field"><label>Category</label><select id="supCategory"><option>Portfolio</option><option>Authentication / OTP</option><option>Market Data</option><option>Feedback</option></select></div>
+                  <div class="field"><label>Platform Rating (1-5)</label><select id="supRating"><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Fair</option><option value="1">1 - Poor</option></select></div>
+                </div>
+                <div class="field"><label>Message</label><textarea id="supMessage" rows="3" required></textarea></div>
+                <button type="submit" class="btn btn-brand btn-sm">Submit Ticket</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card">
+            <strong>Your Support Tickets</strong>
+            <div id="ticketsList" style="margin-top:10px;"></div>
+          </div>
+        </section>
+
+        <!-- 9. PROFILE & SECURITY SETTINGS -->
+        <section class="view" id="view-profile">
+          <div class="grid-2" style="margin-bottom:18px;">
+            <div class="card">
+              <strong>Profile Details & Preferences</strong>
+              <form onsubmit="saveProfile(event)" style="margin-top:12px;">
+                <div class="field"><label>Full Name</label><input type="text" id="profName" required /></div>
+                <div class="field"><label>Mobile Number</label><input type="text" id="profMobile" /></div>
+                <div class="grid-3">
+                  <div class="field"><label>Currency</label><select id="profCurrency"><option value="INR">INR</option><option value="USD">USD</option></select></div>
+                  <div class="field"><label>Language</label><select id="profLang"><option value="en">English</option><option value="hi">Hindi</option><option value="te">Telugu</option></select></div>
+                  <div class="field"><label>Theme</label><select id="profTheme"><option value="light">Light</option><option value="dark">Dark</option></select></div>
+                </div>
+                <button type="submit" class="btn btn-brand btn-sm">Save Profile</button>
+              </form>
+            </div>
+
+            <div class="card">
+              <strong>Change Password & Verified Email</strong>
+              <form onsubmit="changeUserPassword(event)" style="margin-top:12px;">
+                <div class="field"><label>Current Password</label><input type="password" id="pwdCurrent" required /></div>
+                <div class="grid-2">
+                  <div class="field"><label>New Password (8+ chars)</label><input type="password" id="pwdNew" minlength="8" required /></div>
+                  <div class="field"><label>Confirm New Password</label><input type="password" id="pwdConfirm" minlength="8" required /></div>
+                </div>
+                <button type="submit" class="btn btn-brand btn-sm">Update Password</button>
+              </form>
+              <hr style="border:0;border-top:1px solid var(--border);margin:14px 0;" />
+              <div class="grid-2">
+                <input type="email" id="newEmailInput" placeholder="New email address" />
+                <button type="button" class="btn btn-ghost btn-sm" onclick="requestEmailChange()">Send Email Change OTP</button>
+              </div>
+              <div class="grid-2" style="margin-top:8px;">
+                <input type="text" id="emailChangeOtpInput" maxlength="6" placeholder="6-digit OTP" />
+                <button type="button" class="btn btn-brand btn-sm" onclick="confirmEmailChange()">Verify New Email</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:18px;overflow-x:auto;">
+            <strong>Active Login Sessions</strong>
+            <table><thead><tr><th>Session</th><th>IP Address</th><th>Device / User-Agent</th><th>Last Active</th><th>Action</th></tr></thead><tbody id="sessionsBody"></tbody></table>
+          </div>
+
+          <div class="card" style="border-color:var(--sell);">
+            <strong style="color:var(--sell);">Account Deactivation & Permanent Deletion</strong>
+            <div style="display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+              <button class="btn btn-ghost btn-sm" onclick="deactivateAccount()">Deactivate Account</button>
+              <input type="password" id="delPwd" placeholder="Current password" style="max-width:180px;" />
+              <input type="text" id="delConfirmText" placeholder="Type DELETE" style="max-width:140px;" />
+              <button class="btn btn-sell btn-sm" onclick="deleteAccount()">Permanently Delete Account</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. ADMINISTRATOR CONSOLE (ADMIN ROLE ONLY) -->
+        <section class="view" id="view-admin">
+          <div class="grid-4" style="margin-bottom:18px;">
+            <div class="card"><div style="color:var(--muted);font-size:12px;">Registered Users</div><div class="num" style="font:700 22px var(--display);" id="admUsers">0</div></div>
+            <div class="card"><div style="color:var(--muted);font-size:12px;">Active Accounts</div><div class="num" style="font:700 22px var(--display);" id="admActive">0</div></div>
+            <div class="card"><div style="color:var(--muted);font-size:12px;">Total Transactions</div><div class="num" style="font:700 22px var(--display);" id="admTxs">0</div></div>
+            <div class="card"><div style="color:var(--muted);font-size:12px;">Total Platform AUM (USD)</div><div class="num" style="font:700 22px var(--display);" id="admAum">$0.00</div></div>
+          </div>
+
+          <div class="card" style="margin-bottom:18px;overflow-x:auto;">
+            <strong>Registered Users & Restricted Support Portfolio Access</strong>
+            <table>
+              <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Controls</th></tr></thead>
+              <tbody id="admUsersBody"></tbody>
+            </table>
+            <div id="supportInspectResult" style="margin-top:12px;"></div>
+          </div>
+
+          <div class="card" style="margin-bottom:18px;overflow-x:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <strong>Local Database Backup & Safe Restore</strong>
+              <button class="btn btn-brand btn-sm" onclick="createAdminBackup()">Create Manual Backup</button>
+            </div>
+            <table>
+              <thead><tr><th>Backup File</th><th>Type</th><th>Size</th><th>Created At</th><th>Action</th></tr></thead>
+              <tbody id="admBackupsBody"></tbody>
+            </table>
+          </div>
+
+          <div class="card" style="overflow-x:auto;">
+            <strong>Security & Audit Logs</strong>
+            <table>
+              <thead><tr><th>Time</th><th>Actor ID</th><th>Event</th><th>Description</th><th>IP</th></tr></thead>
+              <tbody id="admLogsBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="bottom-nav">
+      <button class="active" data-tab="dashboard" onclick="switchTab('dashboard')">📊<span>Home</span></button>
+      <button data-tab="portfolio" onclick="switchTab('portfolio')">💼<span>Portfolio</span></button>
+      <button data-tab="markets" onclick="switchTab('markets')">📈<span>Markets</span></button>
+      <button data-tab="assistant" onclick="switchTab('assistant')">🤖<span>Assistant</span></button>
+      <button data-tab="profile" onclick="switchTab('profile')">👤<span>Profile</span></button>
+    </nav>
+  </div>
+
+  <!-- ADD / EDIT TRANSACTION MODAL -->
+  <div class="modal-bg" id="txModal">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <strong id="txModalTitle">Record Transaction</strong>
+        <button class="btn btn-ghost btn-sm" onclick="closeTxModal()">×</button>
+      </div>
+      <form onsubmit="submitTransaction(event)">
+        <input type="hidden" id="editTxId" />
+        <div class="grid-2">
+          <div class="field"><label>Type</label><select id="txType"><option value="BUY">Buy</option><option value="SELL">Sell</option><option value="DEPOSIT">Deposit</option><option value="WITHDRAWAL">Withdrawal</option><option value="TRANSFER">Transfer</option><option value="STAKING">Staking Rewards</option></select></div>
+          <div class="field"><label>Cryptocurrency</label><select id="txSymbol"></select></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Quantity</label><input type="number" step="any" id="txQty" required /></div>
+          <div class="field"><label>Price per Coin (USD)</label><input type="number" step="any" id="txPrice" required /></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Fee (USD)</label><input type="number" step="any" id="txFee" value="0" required /></div>
+          <div class="field"><label>Date & Time</label><input type="datetime-local" id="txDate" /></div>
+        </div>
+        <div class="field"><label>Notes</label><input type="text" id="txNotes" placeholder="Optional memo" /></div>
+        <div class="err" id="txErr"></div>
+        <button type="submit" class="btn btn-brand" style="width:100%;">Save Transaction</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const I18N = {
+      en: { login: 'Sign In', register: 'Create Account', nav_dashboard: 'Dashboard', nav_portfolio: 'Portfolio & Txns', nav_markets: 'Markets & Compare', nav_analytics: 'Analytics & Tax', nav_alerts: 'Watchlist & Alerts', nav_assistant: 'Portfolio Assistant', nav_dbms: 'DBMS & SQL Console', nav_support: 'Support & Demo', nav_profile: 'Profile & Security', kpi_value: 'Total Portfolio Value', kpi_invested: 'Total Investment', kpi_unrealized: 'Unrealized Profit / Loss', kpi_realized: 'Realized Profit / Loss' },
+      hi: { login: 'लॉग इन', register: 'खाता बनाएं', nav_dashboard: 'डैशबोर्ड', nav_portfolio: 'पोर्टफोलियो और लेनदेन', nav_markets: 'बाज़ार और तुलना', nav_analytics: 'विश्लेषण और कर', nav_alerts: 'वॉचलिस्ट और अलर्ट', nav_assistant: 'पोर्टफोलियो सहायक', nav_dbms: 'DBMS और SQL कंसोल', nav_support: 'सहायता और डेमो', nav_profile: 'प्रोफ़ाइल और सुरक्षा', kpi_value: 'कुल पोर्टफोलियो मूल्य', kpi_invested: 'कुल निवेश', kpi_unrealized: 'अवास्तविक लाभ / हानि', kpi_realized: 'वास्तविक लाभ / हानि' },
+      te: { login: 'సైన్ ఇన్', register: 'ఖాతా తెరవండి', nav_dashboard: 'డ్యాష్‌బోర్డ్', nav_portfolio: 'పోర్ట్‌ఫోలియో & లావాదేవీలు', nav_markets: 'మార్కెట్లు & పోలిక', nav_analytics: 'విశ్లేషణ & పన్ను', nav_alerts: 'వాచ్‌లిస్ట్ & అలర్ట్‌లు', nav_assistant: 'పోర్ట్‌ఫోలియో అసిస్టెంట్', nav_dbms: 'DBMS & SQL కన్సోల్', nav_support: 'సహాయం & డెమో', nav_profile: 'ప్రొఫైల్ & భద్రత', kpi_value: 'మొత్తం పోర్ట్‌ఫోలియో విలువ', kpi_invested: 'మొత్తం పెట్టుబడి', kpi_unrealized: 'అవాస్తవ లాభం / నష్టం', kpi_realized: 'వాస్తవ లాభం / నష్టం' }
+    };
+
+    let csrfToken = '';
+    let currentUser = null;
+    let dashData = null;
+    let pubMarketData = null;
+    let pendingOtpEmail = '';
+
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const toast = msg => { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3200); };
+
+    function fmtCurrency(usdVal, overrideCur = null) {
+      const cur = overrideCur || (currentUser ? currentUser.preferred_currency : document.getElementById('pubCurrency').value) || 'INR';
+      const fx = dashData ? dashData.usd_to_inr : (pubMarketData ? pubMarketData.usd_to_inr : 84.5);
+      const val = Number(usdVal || 0) * (cur === 'INR' ? fx : 1);
+      return (cur === 'INR' ? '₹' : '$') + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    async function apiFetch(url, opts = {}) {
+      opts.headers = Object.assign({ 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }, opts.headers || {});
+      const res = await fetch(url, opts);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      return data;
+    }
+
+    function applyLanguage(lang) {
+      const dict = I18N[lang] || I18N.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if (dict[k]) el.textContent = dict[k];
+      });
+    }
+
+    function toggleTheme() {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+    }
+
+    // AUTH UI & HANDLERS
+    function openAuthModal(view) { document.getElementById('authModal').classList.add('open'); switchAuthView(view); }
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('open'); }
+    function switchAuthView(view) {
+      ['loginForm', 'registerForm', 'otpVerifyForm', 'forgotForm', 'resetForm'].forEach(id => document.getElementById(id).style.display = 'none');
+      const titles = { login: 'Sign In to CryptoVault', register: 'Create CryptoVault Account', otp: 'Verify Email OTP', forgot: 'Forgot Password', reset: 'Reset Password' };
+      document.getElementById('authTitle').textContent = titles[view] || 'CryptoVault';
+      document.getElementById(view === 'otp' ? 'otpVerifyForm' : view + 'Form').style.display = 'block';
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      document.getElementById('regErr').textContent = '';
+      try {
+        const email = document.getElementById('regEmail').value.trim();
+        const res = await apiFetch('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            full_name: document.getElementById('regName').value,
+            email,
+            mobile_number: document.getElementById('regMobile').value,
+            password: document.getElementById('regPassword').value,
+            confirm_password: document.getElementById('regConfirm').value
+          })
+        });
+        pendingOtpEmail = email;
+        document.getElementById('otpEmailDisplay').textContent = email;
+        switchAuthView('otp');
+        toast(res.message);
+      } catch (err) { document.getElementById('regErr').textContent = err.message; }
+    });
+
+    document.getElementById('otpVerifyForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      document.getElementById('otpErr').textContent = '';
+      try {
+        const res = await apiFetch('/api/auth/verify-otp', {
+          method: 'POST',
+          body: JSON.stringify({ email: pendingOtpEmail, otp: document.getElementById('otpCodeInput').value })
+        });
+        closeAuthModal();
+        toast(res.message);
+        await initApp();
+      } catch (err) { document.getElementById('otpErr').textContent = err.message; }
+    });
+
+    async function resendOtpCode() {
+      try {
+        const res = await apiFetch('/api/auth/resend-otp', {
+          method: 'POST',
+          body: JSON.stringify({ email: pendingOtpEmail, purpose: 'REGISTER' })
+        });
+        toast(res.message);
+      } catch (err) { document.getElementById('otpErr').textContent = err.message; }
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      document.getElementById('loginErr').textContent = '';
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('loginEmail').value,
+          password: document.getElementById('loginPassword').value,
+          remember_me: document.getElementById('loginRemember').checked,
+          captcha_answer: document.getElementById('loginCaptcha').value
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        document.getElementById('loginErr').textContent = data.error;
+        if (data.require_captcha) {
+          document.getElementById('captchaBox').style.display = 'grid';
+          document.getElementById('captchaLabel').textContent = data.captcha_question;
+        }
+        return;
+      }
+      csrfToken = data.csrf_token;
+      closeAuthModal();
+      toast(data.message);
+      await initApp();
+    });
+
+    document.getElementById('forgotForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      document.getElementById('forgotErr').textContent = '';
+      try {
+        const email = document.getElementById('forgotEmail').value.trim();
+        const res = await apiFetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+        document.getElementById('resetEmailDisplay').textContent = email;
+        switchAuthView('reset');
+        toast(res.message);
+      } catch (err) { document.getElementById('forgotErr').textContent = err.message; }
+    });
+
+    document.getElementById('resetForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      document.getElementById('resetErr').textContent = '';
+      try {
+        const res = await apiFetch('/api/auth/reset-password', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: document.getElementById('resetEmailDisplay').textContent,
+            otp: document.getElementById('resetOtp').value,
+            new_password: document.getElementById('resetNewPwd').value,
+            confirm_password: document.getElementById('resetConfirmPwd').value
+          })
+        });
+        switchAuthView('login');
+        toast(res.message);
+      } catch (err) { document.getElementById('resetErr').textContent = err.message; }
+    });
+
+    async function startDemoMode() {
+      try {
+        const res = await apiFetch('/api/demo/start', { method: 'POST' });
+        csrfToken = res.csrf_token;
+        toast(res.message);
+        await initApp();
+      } catch (err) { toast(err.message); }
+    }
+
+    async function logout() {
+      await apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      currentUser = null;
+      document.getElementById('appShell').style.display = 'none';
+      document.getElementById('landingPage').style.display = 'block';
+      loadPublicMarket();
+    }
+
+    // PUBLIC MARKET
+    async function loadPublicMarket() {
+      try {
+        pubMarketData = await apiFetch('/api/public/market');
+        renderPublicMarket();
+      } catch (e) {}
+    }
+
+    function renderPublicMarket() {
+      if (!pubMarketData) return;
+      const cur = document.getElementById('pubCurrency').value;
+      const st = pubMarketData.market_status;
+      document.getElementById('pubMarketBadge').textContent = st.is_stale ? 'Cached Prices' : `${st.provider} Live`;
+      document.getElementById('pubMarketBody').innerHTML = pubMarketData.coins.map(c => `
+        <tr>
+          <td><strong>${esc(c.name)}</strong> <span style="color:var(--muted);">(${esc(c.symbol)})</span></td>
+          <td class="num">${fmtCurrency(c.price_usd, cur)}</td>
+          <td class="num ${c.change_24h >= 0 ? 'pos' : 'neg'}">${c.change_24h >= 0 ? '+' : ''}${Number(c.change_24h).toFixed(2)}%</td>
+          <td class="num">${fmtCurrency(c.market_cap_usd, cur)}</td>
+        </tr>`).join('');
+    }
+
+    // MAIN APP INIT & TAB SWITCHING
+    async function initApp() {
+      const status = await apiFetch('/api/auth/status');
+      csrfToken = status.csrf_token;
+      if (!status.authenticated) {
+        document.getElementById('landingPage').style.display = 'block';
+        document.getElementById('appShell').style.display = 'none';
+        loadPublicMarket();
+        return;
+      }
+
+      currentUser = status.user;
+      document.getElementById('landingPage').style.display = 'none';
+      document.getElementById('appShell').style.display = 'block';
+      document.documentElement.setAttribute('data-theme', currentUser.theme_mode || 'light');
+      document.getElementById('currencySelect').value = currentUser.preferred_currency;
+      document.getElementById('langSelect').value = currentUser.preferred_language;
+      document.getElementById('demoModeBadge').style.display = currentUser.is_demo ? 'inline-block' : 'none';
+      document.getElementById('adminSideBtn').style.display = currentUser.role === 'ADMIN' ? 'flex' : 'none';
+      applyLanguage(currentUser.preferred_language);
+
+      document.getElementById('profName').value = currentUser.full_name;
+      document.getElementById('profMobile').value = currentUser.mobile_number;
+      document.getElementById('profCurrency').value = currentUser.preferred_currency;
+      document.getElementById('profLang').value = currentUser.preferred_language;
+      document.getElementById('profTheme').value = currentUser.theme_mode;
+
+      await loadDashboard(false);
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.side-item, .bottom-nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + tab).classList.add('active');
+      document.getElementById('pageTitle').textContent = tab.toUpperCase();
+
+      if (tab === 'analytics') loadAnalytics();
+      if (tab === 'dbms') loadDbSchema();
+      if (tab === 'support') loadSupport();
+      if (tab === 'profile') loadProfileActivity();
+      if (tab === 'admin') loadAdminPanel();
+    }
+
+    async function loadDashboard(force = false) {
+      dashData = await apiFetch('/api/dashboard' + (force ? '?force=1' : ''));
+      const st = dashData.market_status;
+      const badge = document.getElementById('marketFreshBadge');
+      badge.textContent = st.is_stale ? `Stale/Cached (${st.last_updated || 'N/A'})` : `${st.provider} Live (${st.last_updated.slice(11, 19)})`;
+      badge.className = 'badge ' + (st.is_stale ? 'badge-amber' : 'badge-green');
+
+      const unread = dashData.notifications.filter(n => !n.is_read).length;
+      document.getElementById('unreadNotifCount').textContent = unread;
+
+      const totalVal = dashData.holdings.reduce((s, h) => s + h.quantity * h.price_usd, 0);
+      const totalInv = dashData.holdings.reduce((s, h) => s + h.invested, 0);
+      const realized = dashData.holdings.reduce((s, h) => s + h.realized_pnl, 0);
+      const unrealized = totalVal - totalInv;
+
+      document.getElementById('kpiTotalVal').textContent = fmtCurrency(totalVal);
+      document.getElementById('kpiTotalInv').textContent = fmtCurrency(totalInv);
+      const unEl = document.getElementById('kpiUnrealized');
+      unEl.textContent = (unrealized >= 0 ? '+' : '-') + fmtCurrency(Math.abs(unrealized));
+      unEl.className = 'num ' + (unrealized >= 0 ? 'pos' : 'neg');
+      const reEl = document.getElementById('kpiRealized');
+      reEl.textContent = (realized >= 0 ? '+' : '-') + fmtCurrency(Math.abs(realized));
+      reEl.className = 'num ' + (realized >= 0 ? 'pos' : 'neg');
+
+      if (dashData.holdings.length) {
+        const sorted = [...dashData.holdings].sort((a, b) => ((b.quantity * b.price_usd) - b.invested) - ((a.quantity * a.price_usd) - a.invested));
+        document.getElementById('topWorstSummary').textContent = `Best: ${sorted[0].symbol} | Lowest: ${sorted[sorted.length - 1].symbol}`;
+      }
+
+      // Recent Transactions
+      document.getElementById('dashRecentTxBody').innerHTML = dashData.transactions.slice(0, 6).map(t => `
+        <tr><td>${esc(t.tx_date)}</td><td><span class="badge ${t.tx_type === 'SELL' || t.tx_type === 'WITHDRAWAL' ? 'badge-red' : 'badge-green'}">${esc(t.tx_type)}</span></td><td><strong>${esc(t.symbol)}</strong></td><td class="num">${t.quantity}</td><td class="num">${fmtCurrency(t.price_usd)}</td></tr>
+      `).join('') || '<tr><td colspan="5">No transactions yet.</td></tr>';
+
+      // Watchlist
+      document.getElementById('dashWatchBody').innerHTML = dashData.watchlist.map(w => `
+        <tr><td><strong>${esc(w.name)}</strong> (${esc(w.symbol)})</td><td class="num">${fmtCurrency(w.price_usd)}</td><td class="num ${w.change_24h >= 0 ? 'pos' : 'neg'}">${w.change_24h >= 0 ? '+' : ''}${w.change_24h.toFixed(2)}%</td></tr>
+      `).join('') || '<tr><td colspan="3">Watchlist empty.</td></tr>';
+
+      // Holdings Table
+      document.getElementById('holdingsBody').innerHTML = dashData.holdings.map(h => {
+        const curVal = h.quantity * h.price_usd;
+        const pnl = curVal - h.invested;
+        return `<tr>
+          <td><strong>${esc(h.name)}</strong> (${esc(h.symbol)})</td>
+          <td class="num">${h.quantity}</td>
+          <td class="num">${fmtCurrency(h.avg_buy_price)}</td>
+          <td class="num">${fmtCurrency(h.invested)}</td>
+          <td class="num">${fmtCurrency(h.price_usd)}</td>
+          <td class="num"><strong>${fmtCurrency(curVal)}</strong></td>
+          <td class="num ${pnl >= 0 ? 'pos' : 'neg'}">${pnl >= 0 ? '+' : '-'}${fmtCurrency(Math.abs(pnl))}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="editHoldingPrompt('${esc(h.symbol)}', ${h.quantity}, ${h.avg_buy_price})">Edit</button>
+            <button class="btn btn-sell btn-sm" onclick="deleteHolding('${esc(h.symbol)}')">Delete</button>
+          </td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="8">No holdings yet.</td></tr>';
+
+      // All Transactions Table
+      document.getElementById('allTxBody').innerHTML = dashData.transactions.map(t => `
+        <tr>
+          <td class="num">#${t.tx_id}</td>
+          <td>${esc(t.tx_date)}</td>
+          <td><span class="badge ${t.tx_type === 'SELL' || t.tx_type === 'WITHDRAWAL' ? 'badge-red' : 'badge-green'}">${esc(t.tx_type)}</span></td>
+          <td><strong>${esc(t.symbol)}</strong></td>
+          <td class="num">${t.quantity}</td>
+          <td class="num">${fmtCurrency(t.price_usd)}</td>
+          <td class="num">${fmtCurrency(t.fee_usd)}</td>
+          <td>${esc(t.notes)}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick='openEditTx(${JSON.stringify(t)})'>Edit</button>
+            <button class="btn btn-sell btn-sm" onclick="deleteTx(${t.tx_id})">Delete</button>
+          </td>
+        </tr>`).join('') || '<tr><td colspan="9">No transactions recorded.</td></tr>';
+
+      renderMarketAndAlerts();
+      drawCharts(totalVal);
+    }
+
+    function renderMarketAndAlerts() {
+      const coins = dashData.coins;
+      const coinOpts = coins.map(c => `<option value="${esc(c.symbol)}">${esc(c.name)} (${esc(c.symbol)})</option>`).join('');
+      ['txSymbol', 'watchAddSelect', 'alertCoinSelect', 'cmpCoin1', 'cmpCoin2', 'cmpCoin3'].forEach((id, idx) => {
+        const el = document.getElementById(id);
+        const prev = el.value;
+        el.innerHTML = coinOpts;
+        if (prev) el.value = prev;
+        else if (id.startsWith('cmpCoin') && coins[idx - 3]) el.value = coins[idx - 3].symbol;
+      });
+
+      const totalCap = coins.reduce((s, c) => s + (c.market_cap_usd || 0), 0);
+      const btc = coins.find(c => c.symbol === 'BTC');
+      document.getElementById('mktGlobalCap').textContent = fmtCurrency(totalCap);
+      document.getElementById('mktBtcDom').textContent = (btc && totalCap > 0) ? ((btc.market_cap_usd / totalCap) * 100).toFixed(2) + '%' : 'N/A';
+      const byChg = [...coins].sort((a, b) => b.change_24h - a.change_24h);
+      if (byChg.length) {
+        document.getElementById('mktGainerLoser').innerHTML = `<span class="pos">${byChg[0].symbol} (+${byChg[0].change_24h.toFixed(2)}%)</span> / <span class="neg">${byChg[byChg.length - 1].symbol} (${byChg[byChg.length - 1].change_24h.toFixed(2)}%)</span>`;
+      }
+
+      document.getElementById('allCoinsBody').innerHTML = coins.map(c => `
+        <tr>
+          <td><strong>${esc(c.name)}</strong> (${esc(c.symbol)})</td>
+          <td class="num">${fmtCurrency(c.price_usd)}</td>
+          <td class="num ${c.change_24h >= 0 ? 'pos' : 'neg'}">${c.change_24h >= 0 ? '+' : ''}${c.change_24h.toFixed(2)}%</td>
+          <td class="num">${fmtCurrency(c.market_cap_usd)}</td>
+          <td class="num">${fmtCurrency(c.volume_24h_usd)}</td>
+          <td><span class="badge badge-green">${esc(c.price_source)}</span> ${esc(c.last_updated)}</td>
+        </tr>`).join('');
+
+      renderComparison();
+
+      document.getElementById('watchFullBody').innerHTML = dashData.watchlist.map(w => `
+        <tr><td><strong>${esc(w.symbol)}</strong></td><td class="num">${fmtCurrency(w.price_usd)}</td><td class="num ${w.change_24h >= 0 ? 'pos' : 'neg'}">${w.change_24h.toFixed(2)}%</td><td><button class="btn btn-sell btn-sm" onclick="removeWatchlist('${esc(w.symbol)}')">Remove</button></td></tr>
+      `).join('');
+
+      document.getElementById('alertsBody').innerHTML = dashData.alerts.map(a => `
+        <tr><td><strong>${esc(a.symbol)}</strong></td><td>${esc(a.direction)} $${a.target_price_usd}</td><td><span class="badge ${a.is_triggered ? 'badge-amber' : 'badge-green'}">${a.is_triggered ? 'Triggered' : 'Active'}</span></td><td><button class="btn btn-sell btn-sm" onclick="deleteAlert(${a.alert_id})">Delete</button></td></tr>
+      `).join('');
+
+      document.getElementById('notifList').innerHTML = dashData.notifications.map(n => `
+        <div style="padding:10px;border-bottom:1px solid var(--border);opacity:${n.is_read ? '.65' : '1'};">
+          <div style="display:flex;justify-content:space-between;"><strong>[${esc(n.category)}] ${esc(n.title)}</strong><span style="font-size:11px;color:var(--muted);">${esc(n.created_at)}</span></div>
+          <div style="font-size:13px;color:var(--muted);margin-top:3px;">${esc(n.message)}</div>
+        </div>`).join('') || '<div style="color:var(--muted);">No notifications.</div>';
+    }
+
+    function renderComparison() {
+      if (!dashData) return;
+      const syms = ['cmpCoin1', 'cmpCoin2', 'cmpCoin3'].map(id => document.getElementById(id).value);
+      const selected = syms.map(s => dashData.coins.find(c => c.symbol === s) || dashData.coins[0]);
+      selected.forEach((c, i) => { if (c) document.getElementById('cmpH' + (i + 1)).textContent = `${c.name} (${c.symbol})`; });
+      document.getElementById('cmpBody').innerHTML = `
+        <tr><td>Current Price</td>${selected.map(c => `<td class="num">${c ? fmtCurrency(c.price_usd) : '-'}</td>`).join('')}</tr>
+        <tr><td>24h Change</td>${selected.map(c => `<td class="num ${c && c.change_24h >= 0 ? 'pos' : 'neg'}">${c ? c.change_24h.toFixed(2) + '%' : '-'}</td>`).join('')}</tr>
+        <tr><td>Market Cap</td>${selected.map(c => `<td class="num">${c ? fmtCurrency(c.market_cap_usd) : '-'}</td>`).join('')}</tr>
+        <tr><td>24h Volume</td>${selected.map(c => `<td class="num">${c ? fmtCurrency(c.volume_24h_usd) : '-'}</td>`).join('')}</tr>
+      `;
+    }
+
+    // TRANSACTIONS & HOLDINGS CRUD
+    function openTxModal() {
+      document.getElementById('editTxId').value = '';
+      document.getElementById('txModalTitle').textContent = 'Record New Transaction';
+      document.getElementById('txQty').value = '';
+      document.getElementById('txPrice').value = '';
+      document.getElementById('txFee').value = '0';
+      document.getElementById('txNotes').value = '';
+      document.getElementById('txModal').classList.add('open');
+    }
+    function openEditTx(t) {
+      document.getElementById('editTxId').value = t.tx_id;
+      document.getElementById('txModalTitle').textContent = `Edit Transaction #${t.tx_id}`;
+      document.getElementById('txType').value = t.tx_type;
+      document.getElementById('txSymbol').value = t.symbol;
+      document.getElementById('txQty').value = t.quantity;
+      document.getElementById('txPrice').value = t.price_usd;
+      document.getElementById('txFee').value = t.fee_usd;
+      document.getElementById('txNotes').value = t.notes;
+      document.getElementById('txModal').classList.add('open');
+    }
+    function closeTxModal() { document.getElementById('txModal').classList.remove('open'); }
+
+    async function submitTransaction(e) {
+      e.preventDefault();
+      document.getElementById('txErr').textContent = '';
+      const editId = document.getElementById('editTxId').value;
+      const payload = {
+        tx_type: document.getElementById('txType').value,
+        symbol: document.getElementById('txSymbol').value,
+        quantity: document.getElementById('txQty').value,
+        price_usd: document.getElementById('txPrice').value,
+        fee_usd: document.getElementById('txFee').value,
+        tx_date: document.getElementById('txDate').value,
+        notes: document.getElementById('txNotes').value
+      };
+      try {
+        const res = await apiFetch(editId ? `/api/transactions/${editId}` : '/api/transactions', {
+          method: editId ? 'PUT' : 'POST',
+          body: JSON.stringify(payload)
+        });
+        closeTxModal();
+        toast(res.message);
+        await loadDashboard(false);
+      } catch (err) { document.getElementById('txErr').textContent = err.message; }
+    }
+
+    async function deleteTx(id) {
+      if (!confirm('Delete this transaction and recalculate holdings?')) return;
+      try {
+        const res = await apiFetch(`/api/transactions/${id}`, { method: 'DELETE' });
+        toast(res.message);
+        await loadDashboard(false);
+      } catch (err) { toast(err.message); }
+    }
+
+    async function editHoldingPrompt(sym, curQty, curAvg) {
+      const q = prompt(`Enter updated quantity for ${sym}:`, curQty);
+      if (q === null) return;
+      const p = prompt(`Enter updated average buy price (USD) for ${sym}:`, curAvg);
+      if (p === null) return;
+      try {
+        const res = await apiFetch(`/api/holdings/${sym}`, { method: 'PUT', body: JSON.stringify({ quantity: q, avg_buy_price: p }) });
+        toast(res.message);
+        await loadDashboard(false);
+      } catch (err) { toast(err.message); }
+    }
+
+    async function deleteHolding(sym) {
+      if (!confirm(`Remove ${sym} holding from portfolio?`)) return;
+      try {
+        const res = await apiFetch(`/api/holdings/${sym}`, { method: 'DELETE' });
+        toast(res.message);
+        await loadDashboard(false);
+      } catch (err) { toast(err.message); }
+    }
+
+    async function uploadCsv() {
+      const inp = document.getElementById('csvFileInput');
+      if (!inp.files.length) return toast('Choose a CSV file first.');
+      const fd = new FormData();
+      fd.append('file', inp.files[0]);
+      const res = await fetch('/api/transactions/import-csv', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': csrfToken },
+        body: fd
+      });
+      const data = await res.json();
+      if (!res.ok) return toast(data.error);
+      document.getElementById('csvImportReport').innerHTML = `<strong>${esc(data.message)}</strong>` + (data.errors.length ? `<div class="neg">${data.errors.map(esc).join('<br>')}</div>` : '');
+      await loadDashboard(false);
+    }
+
+    async function saveCustomCoin() {
+      try {
+        const res = await apiFetch('/api/coins/custom', {
+          method: 'POST',
+          body: JSON.stringify({
+            symbol: document.getElementById('custSym').value,
+            name: document.getElementById('custName').value,
+            current_price_usd: document.getElementById('custPrice').value
+          })
+        });
+        toast(res.message);
+        await loadDashboard(false);
+      } catch (err) { toast(err.message); }
+    }
+
+    async function addWatchlist() {
+      const sym = document.getElementById('watchAddSelect').value;
+      const res = await apiFetch('/api/watchlist', { method: 'POST', body: JSON.stringify({ symbol: sym }) });
+      toast(res.message);
+      await loadDashboard(false);
+    }
+    async function removeWatchlist(sym) {
+      const res = await apiFetch(`/api/watchlist/${sym}`, { method: 'DELETE' });
+      toast(res.message);
+      await loadDashboard(false);
+    }
+    async function createPriceAlert() {
+      try {
+        const res = await apiFetch('/api/alerts', {
+          method: 'POST',
+          body: JSON.stringify({
+            symbol: document.getElementById('alertCoinSelect').value,
+            direction: document.getElementById('alertDirSelect').value,
+            target_price_usd: document.getElementById('alertTargetInput').value
+          })
+        });
+        toast(res.message);
+        await loadDashboard(false);
+      } catch (err) { toast(err.message); }
+    }
+    async function deleteAlert(id) {
+      await apiFetch(`/api/alerts/${id}`, { method: 'DELETE' });
+      await loadDashboard(false);
+    }
+    async function markAllNotifsRead() {
+      await apiFetch('/api/notifications/read-all', { method: 'POST' });
+      await loadDashboard(false);
+    }
+
+    // ANALYTICS, ASSISTANT, DBMS, SUPPORT, PROFILE, ADMIN
+    async function loadAnalytics() {
+      const d = await apiFetch('/api/analytics');
+      const t = d.tax_estimate;
+      document.getElementById('taxRealized').textContent = fmtCurrency(t.realized_pnl_usd);
+      document.getElementById('tax30').textContent = fmtCurrency(t.estimated_30pct_vda_tax_usd);
+      document.getElementById('tax1').textContent = fmtCurrency(t.estimated_1pct_tds_usd);
+      document.getElementById('taxTotal').textContent = fmtCurrency(t.total_estimated_liability_usd);
+      document.getElementById('monthlyBody').innerHTML = d.monthly.map(m => `
+        <tr><td>${esc(m.month)}</td><td class="num">${fmtCurrency(m.bought_usd)}</td><td class="num">${fmtCurrency(m.sold_usd)}</td><td class="num">${m.tx_count}</td></tr>
+      `).join('') || '<tr><td colspan="4">No monthly history yet.</td></tr>';
+    }
+
+    async function askAssistant(preset = null) {
+      const inp = document.getElementById('chatInput');
+      const q = preset || inp.value.trim();
+      if (!q) return;
+      if (!preset) inp.value = '';
+      const box = document.getElementById('chatBox');
+      box.innerHTML += `<div class="chat-msg chat-user">${esc(q)}</div>`;
+      const res = await apiFetch('/api/assistant/query', { method: 'POST', body: JSON.stringify({ question: q }) });
+      box.innerHTML += `<div class="chat-msg chat-bot">${esc(res.answer)}</div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function loadDbSchema() {
+      const s = await apiFetch('/api/db/schema');
+      document.getElementById('schemaTablesBody').innerHTML =
+        s.tables.map(t => `<tr><td><strong>${esc(t.TABLE_NAME)}</strong></td><td>${esc(t.TABLE_TYPE)}</td><td>${esc(t.ENGINE || 'VIEW')}</td></tr>`).join('') +
+        s.routines.map(r => `<tr><td><strong>${esc(r.ROUTINE_NAME)}</strong></td><td>${esc(r.ROUTINE_TYPE)}</td><td>MySQL</td></tr>`).join('');
+      document.getElementById('schemaFkBody').innerHTML = s.foreign_keys.map(f => `
+        <tr><td>${esc(f.TABLE_NAME)}.${esc(f.COLUMN_NAME)}</td><td>${esc(f.REFERENCED_TABLE_NAME)}.${esc(f.REFERENCED_COLUMN_NAME)}</td><td>${esc(f.CONSTRAINT_NAME)}</td></tr>
+      `).join('');
+    }
+
+    async function runSqlQuery(confirmed) {
+      const sql = document.getElementById('sqlInput').value;
+      const conf = confirmed || document.getElementById('sqlConfirmWrite').checked;
+      try {
+        const res = await apiFetch('/api/db/query', { method: 'POST', body: JSON.stringify({ sql, confirmed: conf }) });
+        document.getElementById('sqlMsg').innerHTML = `<span class="pos">${esc(res.message)}</span>`;
+        const tbl = document.getElementById('sqlResultTable');
+        if (!res.rows.length) { tbl.innerHTML = ''; return; }
+        const cols = Object.keys(res.rows[0]);
+        tbl.innerHTML = `<thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${res.rows.map(r => `<tr>${cols.map(c => `<td>${esc(r[c])}</td>`).join('')}</tr>`).join('')}</tbody>`;
+      } catch (err) { document.getElementById('sqlMsg').innerHTML = `<span class="neg">${esc(err.message)}</span>`; }
+    }
+
+    async function loadSupport() {
+      const d = await apiFetch('/api/support');
+      document.getElementById('faqList').innerHTML = d.faqs.map(f => `<div style="margin-bottom:10px;"><strong>${esc(f.q)}</strong><div style="color:var(--muted);font-size:12px;">${esc(f.a)}</div></div>`).join('');
+      document.getElementById('ticketsList').innerHTML = d.tickets.map(t => `
+        <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;"><strong>#${t.ticket_id} — ${esc(t.subject)}</strong><span class="badge badge-green">${esc(t.status)}</span></div>
+          ${t.messages.map(m => `<div style="font-size:12px;margin-top:6px;"><strong>${esc(m.sender_name)} (${esc(m.sender_role)}):</strong> ${esc(m.body)}</div>`).join('')}
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <input type="text" id="rep_${t.ticket_id}" placeholder="Write reply..." />
+            <button class="btn btn-brand btn-sm" onclick="replyTicket(${t.ticket_id})">Reply</button>
+          </div>
+        </div>`).join('') || '<div style="color:var(--muted);">No support tickets yet.</div>';
+    }
+
+    async function submitSupportTicket(e) {
+      e.preventDefault();
+      const res = await apiFetch('/api/support/tickets', {
+        method: 'POST',
+        body: JSON.stringify({
+          subject: document.getElementById('supSubject').value,
+          category: document.getElementById('supCategory').value,
+          rating: document.getElementById('supRating').value,
+          message: document.getElementById('supMessage').value
+        })
+      });
+      toast(res.message);
+      loadSupport();
+    }
+
+    async function replyTicket(id) {
+      const body = document.getElementById('rep_' + id).value;
+      const status = currentUser.role === 'ADMIN' ? 'RESOLVED' : '';
+      await apiFetch(`/api/support/tickets/${id}/reply`, { method: 'POST', body: JSON.stringify({ body, status }) });
+      loadSupport();
+    }
+
+    async function loadProfileActivity() {
+      const d = await apiFetch('/api/profile');
+      document.getElementById('sessionsBody').innerHTML = d.sessions.map(s => `
+        <tr><td>${esc(s.session_preview)} ${s.is_current ? '<span class="badge badge-green">Current</span>' : ''}</td><td>${esc(s.ip_address)}</td><td>${esc((s.user_agent || '').slice(0, 45))}</td><td>${esc(s.last_seen_at)}</td><td><button class="btn btn-sell btn-sm" onclick="revokeSess('${esc(s.session_id)}')">Revoke</button></td></tr>
+      `).join('');
+    }
+
+    async function saveProfile(e) {
+      e.preventDefault();
+      const res = await apiFetch('/api/profile/update', {
+        method: 'PUT',
+        body: JSON.stringify({
+          full_name: document.getElementById('profName').value,
+          mobile_number: document.getElementById('profMobile').value,
+          preferred_currency: document.getElementById('profCurrency').value,
+          preferred_language: document.getElementById('profLang').value,
+          theme_mode: document.getElementById('profTheme').value
+        })
+      });
+      toast(res.message);
+      await initApp();
+    }
+
+    async function changeCurrency(val) {
+      currentUser.preferred_currency = val;
+      await apiFetch('/api/profile/update', { method: 'PUT', body: JSON.stringify({ preferred_currency: val }) }).catch(() => {});
+      await loadDashboard(false);
+    }
+
+    async function changeLanguage(val) {
+      currentUser.preferred_language = val;
+      applyLanguage(val);
+      await apiFetch('/api/profile/update', { method: 'PUT', body: JSON.stringify({ preferred_language: val }) }).catch(() => {});
+    }
+
+    async function changeUserPassword(e) {
+      e.preventDefault();
+      try {
+        const res = await apiFetch('/api/profile/change-password', {
+          method: 'POST',
+          body: JSON.stringify({
+            current_password: document.getElementById('pwdCurrent').value,
+            new_password: document.getElementById('pwdNew').value,
+            confirm_password: document.getElementById('pwdConfirm').value
+          })
+        });
+        toast(res.message);
+      } catch (err) { toast(err.message); }
+    }
+
+    async function requestEmailChange() {
+      try {
+        const res = await apiFetch('/api/profile/request-email-change', { method: 'POST', body: JSON.stringify({ new_email: document.getElementById('newEmailInput').value }) });
+        toast(res.message);
+      } catch (err) { toast(err.message); }
+    }
+
+    async function confirmEmailChange() {
+      try {
+        const res = await apiFetch('/api/profile/confirm-email-change', {
+          method: 'POST',
+          body: JSON.stringify({ new_email: document.getElementById('newEmailInput').value, otp: document.getElementById('emailChangeOtpInput').value })
+        });
+        toast(res.message);
+        await initApp();
+      } catch (err) { toast(err.message); }
+    }
+
+    async function revokeSess(sid) {
+      await apiFetch(`/api/profile/sessions/${sid}`, { method: 'DELETE' });
+      loadProfileActivity();
+    }
+
+    async function deactivateAccount() {
+      if (!confirm('Deactivate your account now?')) return;
+      await apiFetch('/api/profile/deactivate', { method: 'POST' });
+      await initApp();
+    }
+
+    async function deleteAccount() {
+      try {
+        const res = await apiFetch('/api/profile/delete', {
+          method: 'POST',
+          body: JSON.stringify({ password: document.getElementById('delPwd').value, confirm_text: document.getElementById('delConfirmText').value })
+        });
+        toast(res.message);
+        await initApp();
+      } catch (err) { toast(err.message); }
+    }
+
+    // ADMIN CONSOLE
+    async function loadAdminPanel() {
+      const d = await apiFetch('/api/admin/overview');
+      document.getElementById('admUsers').textContent = d.stats.total_users;
+      document.getElementById('admActive').textContent = d.stats.active_users;
+      document.getElementById('admTxs').textContent = d.stats.total_transactions;
+      document.getElementById('admAum').textContent = '$' + Number(d.stats.total_aum_usd).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+      document.getElementById('admUsersBody').innerHTML = d.users.map(u => `
+        <tr>
+          <td>#${u.user_id}</td>
+          <td><strong>${esc(u.full_name)}</strong></td>
+          <td>${esc(u.email)}</td>
+          <td>${esc(u.role)}</td>
+          <td><span class="badge ${u.account_status === 'ACTIVE' ? 'badge-green' : 'badge-red'}">${esc(u.account_status)}</span></td>
+          <td>${esc(u.last_login_at || '-')}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="setUserStatus(${u.user_id}, 'ACTIVE')">Activate</button>
+            <button class="btn btn-sell btn-sm" onclick="setUserStatus(${u.user_id}, 'SUSPENDED')">Suspend</button>
+            <button class="btn btn-brand btn-sm" onclick="inspectUserPortfolio(${u.user_id})">Support Inspect</button>
+          </td>
+        </tr>`).join('');
+
+      document.getElementById('admBackupsBody').innerHTML = d.backups.map(b => `
+        <tr><td>${esc(b.file_name)}</td><td>${esc(b.backup_type)}</td><td>${b.file_size_bytes} B</td><td>${esc(b.created_at)}</td><td><button class="btn btn-sell btn-sm" onclick="restoreBackup('${esc(b.file_name)}')">Restore</button></td></tr>
+      `).join('');
+
+      document.getElementById('admLogsBody').innerHTML = d.audit_logs.map(l => `
+        <tr><td>${esc(l.created_at)}</td><td>${l.actor_user_id || '-'}</td><td><strong>${esc(l.event_type)}</strong></td><td>${esc(l.description)}</td><td>${esc(l.ip_address)}</td></tr>
+      `).join('');
+    }
+
+    async function setUserStatus(uid, status) {
+      const res = await apiFetch(`/api/admin/users/${uid}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+      toast(res.message);
+      loadAdminPanel();
+    }
+
+    async function inspectUserPortfolio(uid) {
+      const reason = prompt('Mandatory Audit Log — Enter support ticket / justification (min 10 chars):');
+      if (!reason) return;
+      try {
+        const res = await apiFetch(`/api/admin/support-inspect/${uid}`, { method: 'POST', body: JSON.stringify({ reason }) });
+        document.getElementById('supportInspectResult').innerHTML = `<div class="card"><strong>Audited Support View: ${esc(res.user.full_name)} (${esc(res.user.email)})</strong><pre style="font-size:12px;">${esc(JSON.stringify(res.holdings, null, 2))}</pre></div>`;
+        loadAdminPanel();
+      } catch (err) { toast(err.message); }
+    }
+
+    async function createAdminBackup() {
+      const res = await apiFetch('/api/admin/backups/create', { method: 'POST' });
+      toast(res.message);
+      loadAdminPanel();
+    }
+
+    async function restoreBackup(fileName) {
+      if (!confirm(`Restore database from ${fileName}? A safety backup of the current database will be created first.`)) return;
+      const res = await apiFetch('/api/admin/backups/restore', { method: 'POST', body: JSON.stringify({ file_name: fileName, confirmed: true }) });
+      toast(res.message);
+      loadAdminPanel();
+    }
+
+    // CHARTS
+    function drawCharts(totalVal) {
+      const pCanvas = document.getElementById('perfChart');
+      if (pCanvas) {
+        const rect = pCanvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+        pCanvas.width = Math.max(1, rect.width * dpr); pCanvas.height = Math.max(1, rect.height * dpr);
+        const ctx = pCanvas.getContext('2d'); ctx.scale(dpr, dpr);
+        const w = rect.width, h = rect.height, pad = 20;
+        const pts = [0.68, 0.72, 0.70, 0.78, 0.84, 0.81, 0.90, 0.95, 1.0].map((f, i, arr) => ({
+          x: pad + (i * (w - pad * 2)) / (arr.length - 1),
+          y: h - pad - ((totalVal > 0 ? f : 0.2) * (h - pad * 2))
+        }));
+        ctx.beginPath();
+        pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+        ctx.strokeStyle = '#00B386'; ctx.lineWidth = 2.5; ctx.stroke();
+      }
+
+      const aCanvas = document.getElementById('allocChart');
+      if (aCanvas && dashData) {
+        const rect = aCanvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+        aCanvas.width = Math.max(1, rect.width * dpr); aCanvas.height = Math.max(1, rect.height * dpr);
+        const ctx = aCanvas.getContext('2d'); ctx.scale(dpr, dpr);
+        const cx = rect.width / 2, cy = rect.height / 2, r = Math.min(cx, cy) - 24;
+        if (!dashData.holdings.length || totalVal <= 0) {
+          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 18; ctx.stroke();
+          return;
+        }
+        let start = -Math.PI / 2;
+        dashData.holdings.forEach(h => {
+          const slice = ((h.quantity * h.price_usd) / totalVal) * Math.PI * 2;
+          ctx.beginPath(); ctx.arc(cx, cy, r, start, start + slice); ctx.strokeStyle = h.color || '#00B386'; ctx.lineWidth = 22; ctx.stroke();
+          start += slice;
+        });
+      }
+    }
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    window.addEventListener('offline', () => document.getElementById('offlineBanner').style.display = 'block');
+    window.addEventListener('online', () => document.getElementById('offlineBanner').style.display = 'none');
+    initApp();
+  </script>
+</body>
+</html>

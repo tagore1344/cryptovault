@@ -1,0 +1,6 @@
+Flask==3.0.3
+mysql-connector-python==9.0.0
+argon2-cffi==23.1.0
+requests==2.32.3
+python-dotenv==1.0.1
+fpdf2==2.7.9
